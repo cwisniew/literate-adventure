@@ -4,8 +4,8 @@ package net.rptools.maptool.mtscript.vm.values;
 public enum ValueType {
   /// Represents a boolean value.
   BOOLEAN,
-  /// Represents a numerical value.
-  NUMBER,
+  /// Represents an integer value.
+  INTEGER,
   /// Represents a string value.
   STRING,
   /// Represents a boolean value.

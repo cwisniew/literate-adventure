@@ -15,4 +15,38 @@ public record StringType(String value) implements ValueRecord {
     }
     throw new IllegalArgumentException("Cannot add a string to a non-string"); // TODO: CDW
   }
+
+  @Override
+  public BooleanType compareLessThan(ValueRecord other) {
+    if (other instanceof StringType otherString) {
+      return BooleanType.valueOf(value.compareTo(otherString.value) < 0);
+    }
+    throw new IllegalArgumentException("Cannot compare a string to a non-string"); // TODO: CDW
+  }
+
+  @Override
+  public BooleanType compareLessThanOrEqual(ValueRecord other) {
+    if (other instanceof StringType otherString) {
+      return BooleanType.valueOf(value.compareTo(otherString.value) <= 0);
+    }
+    throw new IllegalArgumentException("Cannot compare a string to a non-string"); // TODO: CDW
+  }
+
+  @Override
+  public BooleanType compareGreaterThan(ValueRecord other) {
+    if (other instanceof StringType otherString) {
+      return BooleanType.valueOf(value.compareTo(otherString.value) > 0);
+    }
+    throw new IllegalArgumentException("Cannot compare a string to a non-string"); // TODO: CDW
+  }
+
+  @Override
+  public BooleanType compareGreaterThanOrEqual(ValueRecord other) {
+    if (other instanceof StringType otherString) {
+      return BooleanType.valueOf(value.compareTo(otherString.value) >= 0);
+    }
+    throw new IllegalArgumentException("Cannot compare a string to a non-string"); // TODO: CDW
+  }
+
+
 }

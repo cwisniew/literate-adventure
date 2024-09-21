@@ -53,7 +53,7 @@ public class MaptoolVM {
       int opcode = readNextByte();
       switch (opcode) {
         // Constant VM operation
-        case OpCode.CONST -> push(getConstant());
+        case OpCode.LOAD_CONST -> push(getConstant());
         // Add VM operation
         case OpCode.ADD -> {
           var op2 = pop();
@@ -78,10 +78,51 @@ public class MaptoolVM {
           var op1 = pop();
           push(op1.divide(op2));
         }
+        // Less than VM operation
+        case OpCode.LT -> {
+          var op2 = pop();
+          var op1 = pop();
+          push(op1.compareLessThan(op2));
+        }
+        // Greater than VM operation
+        case OpCode.GT -> {
+          var op2 = pop();
+          var op1 = pop();
+          push(op1.compareGreaterThan(op2));
+        }
+        // Less than or equal VM operation
+        case OpCode.LTE -> {
+          var op2 = pop();
+          var op1 = pop();
+          push(op1.compareLessThanOrEqual(op2));
+        }
+        // Greater than or equal VM operation
+        case OpCode.GTE -> {
+          var op2 = pop();
+          var op1 = pop();
+          push(op1.compareGreaterThanOrEqual(op2));
+        }
+        // Equal VM operation
+        case OpCode.EQ -> {
+          var op2 = pop();
+          var op1 = pop();
+          push(op1.compareEqual(op2));
+        }
+        // Not equal VM operation
+        case OpCode.NEQ -> {
+          var op2 = pop();
+          var op1 = pop();
+          push(op1.compareNotEqual(op2));
+        }
+
+
+
         // Halt VM operation
         case OpCode.HALT -> {
           log.debug("HALT @ ip = {}", instructionPointer);  // TODO: CDW
-          return pop();
+          var returnValue = pop();
+          stack.clear(); // After the program halts, the values on the stack (if any) are discarded.
+          return returnValue;
         }
         default -> throw new RuntimeException("Unknown opcode: " + opcode); // TODO: CDW
       }

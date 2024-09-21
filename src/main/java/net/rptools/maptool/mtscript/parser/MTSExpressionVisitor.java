@@ -6,14 +6,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.rptools.maptool.mtscript.parser.expr.BinaryOp;
+import net.rptools.maptool.mtscript.parser.expr.BooleanValue;
 import net.rptools.maptool.mtscript.parser.expr.IntegerValue;
 import net.rptools.maptool.mtscript.parser.expr.SExpressionExpr;
 import net.rptools.maptool.mtscript.parser.expr.StringValue;
 import net.rptools.maptool.mtscript.parser.mtSexpressionParser.AtomContext;
 import net.rptools.maptool.mtscript.parser.mtSexpressionParser.ListContext;
 import net.rptools.maptool.mtscript.vm.OpCode;
+import net.rptools.maptool.mtscript.vm.values.BooleanType;
 import net.rptools.maptool.mtscript.vm.values.CodeType;
-import net.rptools.maptool.mtscript.vm.values.NumberType;
+import net.rptools.maptool.mtscript.vm.values.IntegerType;
 import net.rptools.maptool.mtscript.vm.values.StringType;
 import net.rptools.maptool.mtscript.vm.values.ValueRecord;
 
@@ -63,6 +65,12 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
       case "-" -> emit(OpCode.SUB);
       case "*" -> emit(OpCode.MUL);
       case "/" -> emit(OpCode.DIV);
+      case "<" -> emit(OpCode.LT);
+      case ">" -> emit(OpCode.GT);
+      case "<=" -> emit(OpCode.LTE);
+      case ">=" -> emit(OpCode.GTE);
+      case "==" -> emit(OpCode.EQ);
+      case "!=" -> emit(OpCode.NEQ);
       default -> throw new RuntimeException("Unknown operator: " + op.op());
     }
   }
@@ -72,7 +80,7 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
   /// @param value The integer to add.
   /// @return The index of the constant.
   private int addConstant(int value) {
-    return addConstant(new NumberType(value));
+    return addConstant(new IntegerType(value));
   }
 
   /// Adds a string constant to the program.
@@ -80,6 +88,13 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
   /// @return The index of the constant.
   private int addConstant(String value) {
     return addConstant(new StringType(value));
+  }
+
+  /// Adds a boolean constant to the program.
+  /// @param value The boolean to add.
+  /// @return The index of the constant.
+  private int addConstant(boolean value) {
+    return addConstant(BooleanType.valueOf(value));
   }
 
   /// Adds a constant to the program.
@@ -90,6 +105,8 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
       return addConstant(iv.value());
     } else if (value instanceof StringValue sv) {
       return addConstant(sv.value());
+    } else if (value instanceof BooleanValue bv) {
+      return addConstant(bv.value());
     } else {
       throw new RuntimeException("Unknown constant type: " + value); // TODO: CDW
     }
@@ -98,12 +115,12 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
   @Override
   public SExpressionExpr visitAtom(AtomContext ctx) {
     if (ctx.SYMBOL() != null) {
-      return switch (ctx.SYMBOL().getText()) {
-        case "+" -> new BinaryOp("+");
-        case "-" -> new BinaryOp("-");
-        case "*" -> new BinaryOp("*");
-        case "/" -> new BinaryOp("/");
-        // TODO: CDW Add more operators
+      String symbol = ctx.SYMBOL().getText();
+      return switch (symbol) {
+        case "+", "-", "*", "/", "<", ">", "<=", ">=", "==", "!=" -> new BinaryOp(symbol);
+        case "true" -> new BooleanValue(true);
+        case "false" -> new BooleanValue(false);
+        // TODO: CDW Add more operators and variables
         default -> throw new RuntimeException("Unknown operator: " + ctx.SYMBOL().getText());
       };
     } else if (ctx.INTEGER_LITERAL() != null) {
@@ -123,15 +140,18 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
       if (op instanceof BinaryOp bop) {
         var left = visit(ctx.item(1));
         if (left instanceof IntegerValue || left instanceof StringValue) {
-          emit(OpCode.CONST);
+          emit(OpCode.LOAD_CONST);
           emit((byte) addConstant((SExpressionExpr) left));
         }
         var right = visit(ctx.item(2));
         if (right instanceof IntegerValue || right instanceof StringValue) {
-          emit(OpCode.CONST);
+          emit(OpCode.LOAD_CONST);
           emit((byte) addConstant((SExpressionExpr) right));
         }
-        emit (bop);
+        emit(bop);
+      } else if (op instanceof BooleanValue) {
+        emit(OpCode.LOAD_CONST);
+        emit((byte) addConstant((SExpressionExpr) op));
       } else {
         throw new RuntimeException("Unknown operator: " + op); // TODO: CDW
       }
