@@ -43,6 +43,12 @@ public class MapToolVMByteCodeBuilder {
     byteCodeStream.write(b);
   }
 
+  /// Emits an opcode to the byte code stream.
+  /// @param op The opcode to emit.
+  public void emit(OpCode op) {
+    writeByte(op.byteCode());
+  }
+
   /// Adds a constant to the program.
   /// @param constant The constant to add.
   /// @return The index of the constant in the constant pool.
@@ -70,14 +76,14 @@ public class MapToolVMByteCodeBuilder {
   /// Builds the code type.
   /// @return The code type.
   public CodeType build() {
-    writeByte(OpCode.HALT);
+    emit(OpCode.HALT);
     return new CodeType(name, byteCodeStream.toByteArray(), constants, jumpLabels);
   }
 
   /// Emits a load constant instruction.
   /// @param constant The constant to load.
   public void emitLoadConstant(ValueRecord constant) {
-    writeByte(OpCode.LOAD_CONST);
+    emit(OpCode.LOAD_CONST);
     writeByte((byte) addConstant(constant));  // TODO: CDW Handle > 256 constants
   }
 
@@ -101,63 +107,63 @@ public class MapToolVMByteCodeBuilder {
 
   /// Emits an add instruction.
   public void emitAdd() {
-    writeByte(OpCode.ADD);
+    emit(OpCode.ADD);
   }
 
   /// Emits a subtract instruction.
   public void emitSubtract() {
-    writeByte(OpCode.SUB);
+    emit(OpCode.SUB);
   }
 
   /// Emits a multiply instruction.
   public void emitMultiply() {
-    writeByte(OpCode.MUL);
+    emit(OpCode.MULT);
   }
 
   /// Emits a divide instruction.
   public void emitDivide() {
-    writeByte(OpCode.DIV);
+    emit(OpCode.DIV);
   }
 
   /// Emits an equality comparison instruction.
   public void emitEqual() {
-    writeByte(OpCode.EQ);
+    emit(OpCode.EQ);
   }
 
   /// Emits a not equal comparison instruction.
   public void emitNotEqual() {
-    writeByte(OpCode.NEQ);
+    emit(OpCode.NEQ);
   }
 
   /// Emits a less than comparison instruction.
   public void emitLessThan() {
-    writeByte(OpCode.LT);
+    emit(OpCode.LT);
   }
 
   /// Emits a less than or equal comparison instruction.
   public void emitLessThanOrEqual() {
-    writeByte(OpCode.LTE);
+    emit(OpCode.LTE);
   }
 
   /// Emits a greater than comparison instruction.
   public void emitGreaterThan() {
-    writeByte(OpCode.GT);
+    emit(OpCode.GT);
   }
 
   /// Emits a greater than or equal comparison instruction.
   public void emitGreaterThanOrEqual() {
-    writeByte(OpCode.GTE);
+    emit(OpCode.GTE);
   }
 
   /// Emits a jump instruction.
   public void emitJumpIfFalse(int label) {
-    writeByte(OpCode.JUMP_IF_FALSE);
+    emit(OpCode.JUMP_IF_FALSE);
     writeByte((byte) label); // TODO CDW Handle > 256 labels
   }
 
   /// Emits a jump instruction.
   public void emitJump(int label) {
-    writeByte(OpCode.JUMP);
+    emit(OpCode.JUMP);
     writeByte((byte) label); // TODO CDW Handle > 256 labels
   }
 

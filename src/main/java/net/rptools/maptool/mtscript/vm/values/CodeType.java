@@ -1,6 +1,7 @@
 package net.rptools.maptool.mtscript.vm.values;
 
 
+import java.util.Arrays;
 import java.util.List;
 
 /// Represents a code type in the MTScript VM.
@@ -59,6 +60,12 @@ public class CodeType implements ValueRecord {
     return code[index];
   }
 
+  /// Returns the length of the byte code.
+  /// @return The length of the byte code.
+  public int codeLength() {
+    return code.length;
+  }
+
   /// Returns the jump label at the given index.
   /// @param index The index of the jump label.
   /// @return The jump label at the given index.
@@ -67,6 +74,18 @@ public class CodeType implements ValueRecord {
       throw new IndexOutOfBoundsException("Index out of bounds: " + index); // TODO: CDW
     }
     return jumpLabels[index];
+  }
+
+  /// Returns the constants that have been defined.
+  /// @return The constants.
+  public List<ValueRecord> constants() {
+    return List.of(constants);
+  }
+
+  /// Returns the jump labels that have been defined.
+  /// @return The jump labels.
+  public List<Integer> jumpLabels() {
+    return Arrays.stream(jumpLabels).boxed().toList();
   }
 
 }

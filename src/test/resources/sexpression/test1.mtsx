@@ -1,0 +1,1 @@
+(+ (+ "result" (if (< (+ (+ 2 1) 0) 2) (" is ") (" is not "))) "less than 2")

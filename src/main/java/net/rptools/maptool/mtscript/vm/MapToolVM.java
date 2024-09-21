@@ -52,77 +52,77 @@ public class MapToolVM {
   /// @return The result of the program.
   private ValueRecord eval() {
     while (true) {
-      int opcode = readNextByte();
+      var opcode = readNextOpCode();
       switch (opcode) {
         // Constant VM operation
-        case OpCode.LOAD_CONST -> push(getConstant());
+        case LOAD_CONST -> push(getConstant());
         // Add VM operation
-        case OpCode.ADD -> {
+        case ADD -> {
           var op2 = pop();
           var op1 = pop();
           push(op1.add(op2));
         }
         // Subtract VM operation
-        case OpCode.SUB -> {
+        case SUB -> {
           var op2 = pop();
           var op1 = pop();
           push(op1.subtract(op2));
         }
         // Multiply VM operation
-        case OpCode.MUL -> {
+        case MULT -> {
           var op2 = pop();
           var op1 = pop();
           push(op1.multiply(op2));
         }
         // Divide VM operation
-        case OpCode.DIV ->{
+        case DIV ->{
           var op2 = pop();
           var op1 = pop();
           push(op1.divide(op2));
         }
         // Less than VM operation
-        case OpCode.LT -> {
+        case LT -> {
           var op2 = pop();
           var op1 = pop();
           push(op1.compareLessThan(op2));
         }
         // Greater than VM operation
-        case OpCode.GT -> {
+        case GT -> {
           var op2 = pop();
           var op1 = pop();
           push(op1.compareGreaterThan(op2));
         }
         // Less than or equal VM operation
-        case OpCode.LTE -> {
+        case LTE -> {
           var op2 = pop();
           var op1 = pop();
           push(op1.compareLessThanOrEqual(op2));
         }
         // Greater than or equal VM operation
-        case OpCode.GTE -> {
+        case GTE -> {
           var op2 = pop();
           var op1 = pop();
           push(op1.compareGreaterThanOrEqual(op2));
         }
         // Equal VM operation
-        case OpCode.EQ -> {
+        case EQ -> {
           var op2 = pop();
           var op1 = pop();
           push(op1.compareEqual(op2));
         }
         // Not equal VM operation
-        case OpCode.NEQ -> {
+        case NEQ -> {
           var op2 = pop();
           var op1 = pop();
           push(op1.compareNotEqual(op2));
         }
         // Jump VM operation
-        case OpCode.JUMP -> {
+        case JUMP -> {
           int labelIndex = readNextByte();
           instructionPointer = program.getJumpLabel(labelIndex);
         }
         // Jump if false VM operation
-        case OpCode.JUMP_IF_FALSE -> {
+        case JUMP_IF_FALSE -> {
           int labelIndex = readNextByte();
           var value = pop();
           if (value instanceof BooleanType bool) {
@@ -134,7 +134,7 @@ public class MapToolVM {
           }
         }
         // Load label VM operation
-        case OpCode.LOAD_LABEL -> {
+        case LOAD_LABEL -> {
           int labelIndex = readNextByte();
           push(new IntegerType(labelIndex)); // TODO: CDW
         }
@@ -142,7 +142,7 @@ public class MapToolVM {
 
 
         // Halt VM operation
-        case OpCode.HALT -> {
+        case HALT -> {
           log.debug("HALT @ ip = {}", instructionPointer);  // TODO: CDW
           var returnValue = pop();
           stack.clear(); // After the program halts, the values on the stack (if any) are discarded.
@@ -165,6 +165,12 @@ public class MapToolVM {
   /// @return The next byte.
   private byte readNextByte() {
     return program.getByte(instructionPointer++);
+  }
+
+  /// Reads the next opcode from the code.
+  /// @return The next opcode.
+  public OpCode readNextOpCode() {
+    return OpCode.fromByteCode(readNextByte());
   }
 
   /// Pushes a value onto the stack.
