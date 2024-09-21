@@ -1,7 +1,6 @@
 package net.rptools.maptool.mtscript.vm.values;
 
 
-import java.util.ArrayList;
 import java.util.List;
 
 /// Represents a code type in the MTScript VM.
@@ -69,6 +68,5 @@ public class CodeType implements ValueRecord {
     }
     return jumpLabels[index];
   }
-
 
 }
