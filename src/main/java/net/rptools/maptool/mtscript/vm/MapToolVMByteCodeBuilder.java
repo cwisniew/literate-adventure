@@ -3,6 +3,7 @@ package net.rptools.maptool.mtscript.vm;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 import net.rptools.maptool.mtscript.vm.values.BooleanType;
 import net.rptools.maptool.mtscript.vm.values.CodeType;
 import net.rptools.maptool.mtscript.vm.values.IntegerType;
@@ -11,6 +12,10 @@ import net.rptools.maptool.mtscript.vm.values.ValueRecord;
 
 /// Class for building byte code for the MTScript VM.
 public class MapToolVMByteCodeBuilder {
+
+  private record IfElseLabels(int elseLabel, int endIfLabel) {};
+
+  private final Stack<IfElseLabels> ifElseLabels = new Stack<>();
 
   /// The byte code stream.
   private final ByteArrayOutputStream byteCodeStream = new ByteArrayOutputStream();
@@ -144,5 +149,16 @@ public class MapToolVMByteCodeBuilder {
     writeByte(OpCode.GTE);
   }
 
+  /// Emits a jump instruction.
+  public void emitJumpIfFalse(int label) {
+    writeByte(OpCode.JUMP_IF_FALSE);
+    writeByte((byte) label); // TODO CDW Handle > 256 labels
+  }
+
+  /// Emits a jump instruction.
+  public void emitJump(int label) {
+    writeByte(OpCode.JUMP);
+    writeByte((byte) label); // TODO CDW Handle > 256 labels
+  }
 
 }

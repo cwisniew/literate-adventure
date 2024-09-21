@@ -2,7 +2,9 @@ package net.rptools.maptool.mtscript.vm;
 
 
 import java.util.Stack;
+import net.rptools.maptool.mtscript.vm.values.BooleanType;
 import net.rptools.maptool.mtscript.vm.values.CodeType;
+import net.rptools.maptool.mtscript.vm.values.IntegerType;
 import net.rptools.maptool.mtscript.vm.values.ValueRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -114,6 +116,28 @@ public class MapToolVM {
           var op1 = pop();
           push(op1.compareNotEqual(op2));
         }
+        // Jump VM operation
+        case OpCode.JUMP -> {
+          int labelIndex = readNextByte();
+          instructionPointer = program.getJumpLabel(labelIndex);
+        }
+        // Jump if false VM operation
+        case OpCode.JUMP_IF_FALSE -> {
+          int labelIndex = readNextByte();
+          var value = pop();
+          if (value instanceof BooleanType bool) {
+            if (!bool.value()) {
+              instructionPointer = program.getJumpLabel(labelIndex);
+            }
+          } else {
+            throw new RuntimeException("Expected boolean value on stack"); // TODO: CDW
+          }
+        }
+        // Load label VM operation
+        case OpCode.LOAD_LABEL -> {
+          int labelIndex = readNextByte();
+          push(new IntegerType(labelIndex)); // TODO: CDW
+        }
 
 
 
@@ -124,7 +148,8 @@ public class MapToolVM {
           stack.clear(); // After the program halts, the values on the stack (if any) are discarded.
           return returnValue;
         }
-        default -> throw new RuntimeException("Unknown opcode: " + opcode); // TODO: CDW
+        default -> throw new RuntimeException("Unknown opcode: " + String.format("%02x",  opcode)); //
+        // TODO: CDW
       }
     }
   }

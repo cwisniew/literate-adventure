@@ -63,10 +63,19 @@ public class OpCode {
   public static final byte GTE = (byte) 0x2B;
 
   // Jump Operations
-  /// Jumps to the given label if the top value on the stack is false
-  /// JUMP_IF_FALSE <label>
-  /// Pops the top value from the stack and if it is false jumps to the given label.
-  public static final byte JUMP_IF_FALSE = (byte) 0x2C;
+  /// Loads a label onto the stack
+  /// LOAD_LABEL <label index>
+  public static final byte LOAD_LABEL = (byte) 0x2C;
 
+
+  /// Jumps to the given label if the top value on the stack is false
+  /// JUMP_IF_FALSE <label index>
+  /// If the top value on the stack is false, this instruction jumps to the label.
+  public static final byte JUMP_IF_FALSE = (byte) 0x2D;
+
+  /// Jumps to the given label
+  /// JUMP <label index>
+  /// Unconditionally jumps to the label.
+  public static final byte JUMP = (byte) 0x2E;
 
 }

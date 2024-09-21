@@ -19,15 +19,10 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
   private final MapToolVMByteCodeBuilder builder;
 
 
+  /// Creates a new expression visitor.
+  /// @param builder The byte code builder.
   public MTSExpressionVisitor(MapToolVMByteCodeBuilder builder) {
     this.builder = builder;
-  }
-
-  /// Adds a constant to the program.
-  /// @param constant The constant to add.
-  /// @return The index of the constant.
-  private int addConstant(ValueRecord constant) {
-    return builder.addConstant(constant);
   }
 
   /// Emits an opcode to the byte code stream.
@@ -88,8 +83,8 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
   @Override
   public SExpressionExpr visitList(ListContext ctx) {
     if (!ctx.item().isEmpty()) {
-      var op = visit(ctx.item(0));
-      if (op instanceof BinaryOp bop) { // Handle binary operators
+      var nextOp = visit(ctx.item(0));
+      if (nextOp instanceof BinaryOp bop) { // Handle binary operators
         var left = visit(ctx.item(1));
         if (left instanceof SExpressionValue lval) {
           emitLoadConstant(lval);
@@ -99,10 +94,33 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
           emitLoadConstant(rval);
         }
         emit(bop);
-      } else if (op instanceof SExpressionValue) {  // Handle constants
-        emitLoadConstant((SExpressionValue) op);
+      } else if (nextOp instanceof SExpressionValue) {  // Handle constants
+        emitLoadConstant((SExpressionValue) nextOp);
+      } else if (nextOp instanceof Op op) {  // Handle special operators
+        if (op.op().equals("if")) {
+          var condition = visit(ctx.item(1));
+          if (condition instanceof SExpressionValue cval) {
+            emitLoadConstant(cval);
+          }
+          int elseLabel = builder.allocateJumpLabel();
+          builder.emitJumpIfFalse(elseLabel);
+          var trueBranch = visit(ctx.item(2));
+          if (trueBranch instanceof SExpressionValue tval) {
+            emitLoadConstant(tval);
+          }
+          int endLabel = builder.allocateJumpLabel();
+          builder.emitJump(endLabel);
+          builder.setJumpLabel(elseLabel);
+          var falseBranch = visit(ctx.item(3));
+          if (falseBranch instanceof SExpressionValue fval) {
+            emitLoadConstant(fval);
+          }
+          builder.setJumpLabel(endLabel);
+        } else {
+          throw new RuntimeException("Unknown operator: " + op.op()); // TODO: CDW
+        }
       } else {
-        throw new RuntimeException("Unknown operator: " + op); // TODO: CDW
+        throw new RuntimeException("Unknown operator: " + nextOp); // TODO: CDW
       }
     } else {
       return visitChildren(ctx); // TODO: CDW This should return null/nil/empty list
