@@ -13,10 +13,10 @@ public class CodeType implements ValueRecord {
   private final byte[] code;
 
   /// The constants.
-  private final List<ValueRecord> constants = new ArrayList<>();
+  private final ValueRecord[] constants;
 
   // The jump labels.
-  private final List<Integer> jumpLabels = new ArrayList<>();
+  private final int[] jumpLabels;
 
   /// Creates a new code type.
   /// @param name The name of the code.
@@ -26,9 +26,9 @@ public class CodeType implements ValueRecord {
   public CodeType(String name, byte[] code, List<ValueRecord> constants, List<Integer> jumpLabels) {
     this.name = name;
     this.code = new byte[code.length];
-    this.jumpLabels.addAll(jumpLabels);
     System.arraycopy(code, 0, this.code, 0, code.length);
-    this.constants.addAll(constants);
+    this.constants = constants.toArray(new ValueRecord[0]);
+    this.jumpLabels = jumpLabels.stream().mapToInt(i -> i).toArray();
   }
 
   @Override
@@ -47,7 +47,10 @@ public class CodeType implements ValueRecord {
   /// @param index The index of the constant.
   /// @return The constant at the given index.
   public ValueRecord getConstant(int index) {
-    return constants.get(index);
+    if (index < 0 || index >= constants.length) {
+      throw new IndexOutOfBoundsException("Index out of bounds: " + index); // TODO: CDW
+    }
+    return constants[index];
   }
 
   /// Returns the byte at the given index from the byte code.
@@ -61,7 +64,10 @@ public class CodeType implements ValueRecord {
   /// @param index The index of the jump label.
   /// @return The jump label at the given index.
   public int getJumpLabel(int index) {
-    return jumpLabels.get(index);
+    if (index < 0 || index >= jumpLabels.length) {
+      throw new IndexOutOfBoundsException("Index out of bounds: " + index); // TODO: CDW
+    }
+    return jumpLabels[index];
   }
 
 
