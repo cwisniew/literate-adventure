@@ -12,6 +12,7 @@ import net.rptools.maptool.mtscript.parser.expr.SExpressionExpr;
 import net.rptools.maptool.mtscript.parser.expr.StringValue;
 import net.rptools.maptool.mtscript.parser.mtSexpressionParser.AtomContext;
 import net.rptools.maptool.mtscript.parser.mtSexpressionParser.ListContext;
+import net.rptools.maptool.mtscript.vm.MapToolVMByteCodeBuilder;
 import net.rptools.maptool.mtscript.vm.OpCode;
 import net.rptools.maptool.mtscript.vm.values.BooleanType;
 import net.rptools.maptool.mtscript.vm.values.CodeType;
@@ -22,39 +23,25 @@ import net.rptools.maptool.mtscript.vm.values.ValueRecord;
 /// A visitor for S-expressions that generates a program.
 public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpressionExpr> {
 
-  /// The byte code stream.
-  private final ByteArrayOutputStream codeStream = new ByteArrayOutputStream();
+  /// The byte code builder.
+  private final MapToolVMByteCodeBuilder builder;
 
-  /// The list of constants.
-  private final List<ValueRecord> constants = new ArrayList<>();
 
-  /// The map of constants to their index.
-  private final Map<ValueRecord, Integer> constantIndexMap = new HashMap<>();
-
-  /// Returns the compiled program.
-  /// @param name The name to attribute to the program.
-  public CodeType getProgram(String name) {
-    emit(OpCode.HALT);
-    return new CodeType(name, codeStream.toByteArray(), constants);
+  public MTSExpressionVisitor(MapToolVMByteCodeBuilder builder) {
+    this.builder = builder;
   }
 
   /// Adds a constant to the program.
   /// @param constant The constant to add.
   /// @return The index of the constant.
   private int addConstant(ValueRecord constant) {
-    if (constantIndexMap.containsKey(constant)) {
-      return constantIndexMap.get(constant);
-    }
-    constants.add(constant);
-    int ind =  constants.size() - 1;
-    constantIndexMap.put(constant, ind);
-    return ind;
+    return builder.addConstant(constant);
   }
 
   /// Emits a byte to the byte code stream.
   /// @param value The byte to emit.
   private void emit(Byte value) {
-    codeStream.write(value);
+    builder.writeByte(value);
   }
 
   /// Emits an opcode to the byte code stream.

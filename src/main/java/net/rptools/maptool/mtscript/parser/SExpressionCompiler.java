@@ -1,5 +1,6 @@
 package net.rptools.maptool.mtscript.parser;
 
+import net.rptools.maptool.mtscript.vm.MapToolVMByteCodeBuilder;
 import net.rptools.maptool.mtscript.vm.values.CodeType;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -15,8 +16,9 @@ public class SExpressionCompiler {
     var lexer = new mtSexpressionLexer(CharStreams.fromString(source));
     var tokens = new CommonTokenStream(lexer);
     var parser = new mtSexpressionParser(tokens);
-    var visitor = new MTSExpressionVisitor();
+    var builder = new MapToolVMByteCodeBuilder(name);
+    var visitor = new MTSExpressionVisitor(builder);
     var code = visitor.visit(parser.sexpr());
-    return visitor.getProgram(name);
+    return builder.build();
   }
 }

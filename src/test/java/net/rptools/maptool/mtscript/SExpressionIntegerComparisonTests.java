@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import net.rptools.maptool.mtscript.parser.SExpressionCompiler;
-import net.rptools.maptool.mtscript.vm.MaptoolVM;
+import net.rptools.maptool.mtscript.vm.MapToolVM;
 import net.rptools.maptool.mtscript.vm.values.BooleanType;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +15,7 @@ public class SExpressionIntegerComparisonTests {
   /// Tests the true boolean.
   @Test
   public void testTrueBoolean() {
-    MaptoolVM vm = new MaptoolVM();
+    MapToolVM vm = new MapToolVM();
     var compiler = new SExpressionCompiler();
     var code = compiler.compile("(true)", "main");
     var result = vm.exec(code);
@@ -26,7 +26,7 @@ public class SExpressionIntegerComparisonTests {
   /// Tests the false boolean.
   @Test
   public void testFalseBoolean() {
-    MaptoolVM vm = new MaptoolVM();
+    MapToolVM vm = new MapToolVM();
     var compiler = new SExpressionCompiler();
     var code = compiler.compile("(false)", "main");
     var result = vm.exec(code);
@@ -37,7 +37,7 @@ public class SExpressionIntegerComparisonTests {
   /// Tests the less than operator.
   @Test
   public void testLessThan() {
-    MaptoolVM vm = new MaptoolVM();
+    MapToolVM vm = new MapToolVM();
     var compiler = new SExpressionCompiler();
     var code = compiler.compile("(< 1 2)", "main");
     var result = vm.exec(code);
@@ -58,7 +58,7 @@ public class SExpressionIntegerComparisonTests {
   /// Tests the greater than operator.
   @Test
   public void testGreaterThan() {
-    MaptoolVM vm = new MaptoolVM();
+    MapToolVM vm = new MapToolVM();
     var compiler = new SExpressionCompiler();
     var code = compiler.compile("(> 1 2)", "main");
     var result = vm.exec(code);
@@ -79,7 +79,7 @@ public class SExpressionIntegerComparisonTests {
   /// Tests the less than or equal operator.
   @Test
   public void testLessThanOrEqual() {
-    MaptoolVM vm = new MaptoolVM();
+    MapToolVM vm = new MapToolVM();
     var compiler = new SExpressionCompiler();
     var code = compiler.compile("(<= 1 2)", "main");
     var result = vm.exec(code);
@@ -100,7 +100,7 @@ public class SExpressionIntegerComparisonTests {
   /// Tests the greater than or equal operator.
   @Test
   public void testGreaterThanOrEqual() {
-    MaptoolVM vm = new MaptoolVM();
+    MapToolVM vm = new MapToolVM();
     var compiler = new SExpressionCompiler();
     var code = compiler.compile("(>= 1 2)", "main");
     var result = vm.exec(code);
@@ -121,7 +121,7 @@ public class SExpressionIntegerComparisonTests {
   /// Tests the equal operator.
   @Test
   public void testEqual() {
-    MaptoolVM vm = new MaptoolVM();
+    MapToolVM vm = new MapToolVM();
     var compiler = new SExpressionCompiler();
     var code = compiler.compile("(== 1 1)", "main");
     var result = vm.exec(code);
@@ -137,7 +137,7 @@ public class SExpressionIntegerComparisonTests {
   /// Tests the not equal operator.
   @Test
   public void testNotEqual() {
-    MaptoolVM vm = new MaptoolVM();
+    MapToolVM vm = new MapToolVM();
     var compiler = new SExpressionCompiler();
     var code = compiler.compile("(!= 1 1)", "main");
     var result = vm.exec(code);

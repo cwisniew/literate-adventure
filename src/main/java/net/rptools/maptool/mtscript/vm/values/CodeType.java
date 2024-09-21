@@ -15,13 +15,18 @@ public class CodeType implements ValueRecord {
   /// The constants.
   private final List<ValueRecord> constants = new ArrayList<>();
 
+  // The jump labels.
+  private final List<Integer> jumpLabels = new ArrayList<>();
+
   /// Creates a new code type.
   /// @param name The name of the code.
   /// @param code The byte code.
   /// @param constants The constants.
-  public CodeType(String name, byte[] code, List<ValueRecord> constants) {
+  /// @param jumpTargets The jump labels.
+  public CodeType(String name, byte[] code, List<ValueRecord> constants, List<Integer> jumpLabels) {
     this.name = name;
     this.code = new byte[code.length];
+    this.jumpLabels.addAll(jumpLabels);
     System.arraycopy(code, 0, this.code, 0, code.length);
     this.constants.addAll(constants);
   }
@@ -50,6 +55,13 @@ public class CodeType implements ValueRecord {
   /// @return The byte at the given index.
   public byte getByte(int index) {
     return code[index];
+  }
+
+  /// Returns the jump label at the given index.
+  /// @param index The index of the jump label.
+  /// @return The jump label at the given index.
+  public int getJumpLabel(int index) {
+    return jumpLabels.get(index);
   }
 
 

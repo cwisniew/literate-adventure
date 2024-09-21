@@ -8,10 +8,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /// The `MaptoolVM` implements the Virtual Machine for the MapTool scripting language.
-public class MaptoolVM {
+public class MapToolVM {
 
   /// The logger for the class.
-  private static final Logger log = LogManager.getLogger(MaptoolVM.class);
+  private static final Logger log = LogManager.getLogger(MapToolVM.class);
 
   /// The maximum size of the stack.
   private static final int MAX_STACK_SIZE = 512;
@@ -26,7 +26,7 @@ public class MaptoolVM {
   private final Stack<ValueRecord> stack = new Stack<>();
 
   /// Creates a new instance of the `MaptoolVM`class.
-  public MaptoolVM() {
+  public MapToolVM() {
   }
 
   // Execute the given program.
