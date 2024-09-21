@@ -32,29 +32,43 @@ public class Disassembler {
     }
   }
 
+  private void dumpByteCode(PrintStream out, byte... bytes) {
+    for (byte b : bytes) {
+      out.printf("%02x ", b);
+    }
+    for (int i = bytes.length; i < 4; i++) {
+      out.print("   ");
+    }
+  }
+
   /// Disassembles the next instruction.
   /// @param out The stream to write the disassembled instruction to.
   private void disassembleInstruction(PrintStream out) {
-    out.printf("0x%04x: ", instructionPointer);
+    out.printf("%04x: ", instructionPointer);
     OpCode op = readNextOpCode();
     switch (op) {
-      case ADD, SUB, MULT, DIV, EQ, NEQ, LT, GT, LTE, GTE, HALT ->
-          out.printf("%-10s", op.instructionName());
+      case ADD, SUB, MULT, DIV, EQ, NEQ, LT, GT, LTE, GTE, HALT -> {
+        dumpByteCode(out, op.byteCode());
+        out.printf("%-10s", op.instructionName());
+      }
       case LOAD_CONST -> {
-        int constInd = readNextByte();
+        byte constInd = readNextByte();
         var constant = code.getConstant(constInd);
-        out.printf("%-10s     0x%02x          ; %s", op.instructionName(), constInd, constant);
+        dumpByteCode(out, op.byteCode(), constInd);
+        out.printf("%-10s     %02x          ; %s", op.instructionName(), constInd, constant);
       }
       case LOAD_LABEL -> {
-        int label = readNextByte();
+        byte label = readNextByte();
         int addr = code.getJumpLabel(label);
-        out.printf("%-10s     0x%02x          ; addr = 0x%04x", op.instructionName(), label, addr);
+        dumpByteCode(out, op.byteCode(), label);
+        out.printf("%-10s     %02x          ; addr = %04x", op.instructionName(), label, addr);
 
       }
       case JUMP, JUMP_IF_FALSE -> {
-        int label = readNextByte();
+        byte label = readNextByte();
         int addr = code.getJumpLabel(label);
-        out.printf("%-10s     0x%02x          ; Jump to 0x%04x", op.instructionName(), label, addr);
+        dumpByteCode(out, op.byteCode(), label);
+        out.printf("%-10s     %02x          ; Jump to %04x", op.instructionName(), label, addr);
 
       }
       default -> throw new IllegalStateException("Unexpected value: " + op); // TODO: CDW
