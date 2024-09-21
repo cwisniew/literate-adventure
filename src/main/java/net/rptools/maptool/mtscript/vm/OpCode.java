@@ -62,5 +62,11 @@ public class OpCode {
   /// Pops top two values from the stack checks if the second is greater than or equal to the first and places the boolean result on the stack.
   public static final byte GTE = (byte) 0x2B;
 
+  // Jump Operations
+  /// Jumps to the given label if the top value on the stack is false
+  /// JUMP_IF_FALSE <label>
+  /// Pops the top value from the stack and if it is false jumps to the given label.
+  public static final byte JUMP_IF_FALSE = (byte) 0x2C;
+
 
 }

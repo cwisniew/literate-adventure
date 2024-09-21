@@ -8,7 +8,9 @@ import java.util.Map;
 import net.rptools.maptool.mtscript.parser.expr.BinaryOp;
 import net.rptools.maptool.mtscript.parser.expr.BooleanValue;
 import net.rptools.maptool.mtscript.parser.expr.IntegerValue;
+import net.rptools.maptool.mtscript.parser.expr.Op;
 import net.rptools.maptool.mtscript.parser.expr.SExpressionExpr;
+import net.rptools.maptool.mtscript.parser.expr.SExpressionValue;
 import net.rptools.maptool.mtscript.parser.expr.StringValue;
 import net.rptools.maptool.mtscript.parser.mtSexpressionParser.AtomContext;
 import net.rptools.maptool.mtscript.parser.mtSexpressionParser.ListContext;
@@ -107,6 +109,7 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
         case "+", "-", "*", "/", "<", ">", "<=", ">=", "==", "!=" -> new BinaryOp(symbol);
         case "true" -> new BooleanValue(true);
         case "false" -> new BooleanValue(false);
+        case "if" -> new Op(symbol);
         // TODO: CDW Add more operators and variables
         default -> throw new RuntimeException("Unknown operator: " + ctx.SYMBOL().getText());
       };
@@ -126,17 +129,17 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
       var op = visit(ctx.item(0));
       if (op instanceof BinaryOp bop) {
         var left = visit(ctx.item(1));
-        if (left instanceof IntegerValue || left instanceof StringValue) {
+        if (left instanceof SExpressionValue lval) {
           emit(OpCode.LOAD_CONST);
-          emit((byte) addConstant((SExpressionExpr) left));
+          emit((byte) addConstant(lval));
         }
         var right = visit(ctx.item(2));
-        if (right instanceof IntegerValue || right instanceof StringValue) {
+        if (right instanceof SExpressionValue rval) {
           emit(OpCode.LOAD_CONST);
-          emit((byte) addConstant((SExpressionExpr) right));
+          emit((byte) addConstant(rval));
         }
         emit(bop);
-      } else if (op instanceof BooleanValue) {
+      } else if (op instanceof SExpressionValue) {
         emit(OpCode.LOAD_CONST);
         emit((byte) addConstant((SExpressionExpr) op));
       } else {
