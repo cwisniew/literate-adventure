@@ -85,37 +85,12 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
     if (!ctx.item().isEmpty()) {
       var nextOp = visit(ctx.item(0));
       if (nextOp instanceof BinaryOp bop) { // Handle binary operators
-        var left = visit(ctx.item(1));
-        if (left instanceof SExpressionValue lval) {
-          emitLoadConstant(lval);
-        }
-        var right = visit(ctx.item(2));
-        if (right instanceof SExpressionValue rval) {
-          emitLoadConstant(rval);
-        }
-        emit(bop);
+        handleBinaryOp(ctx, bop);
       } else if (nextOp instanceof SExpressionValue) {  // Handle constants
         emitLoadConstant((SExpressionValue) nextOp);
       } else if (nextOp instanceof Op op) {  // Handle special operators
         if (op.op().equals("if")) {
-          var condition = visit(ctx.item(1));
-          if (condition instanceof SExpressionValue cval) {
-            emitLoadConstant(cval);
-          }
-          int elseLabel = builder.allocateJumpLabel();
-          builder.emitJumpIfFalse(elseLabel);
-          var trueBranch = visit(ctx.item(2));
-          if (trueBranch instanceof SExpressionValue tval) {
-            emitLoadConstant(tval);
-          }
-          int endLabel = builder.allocateJumpLabel();
-          builder.emitJump(endLabel);
-          builder.setJumpLabel(elseLabel);
-          var falseBranch = visit(ctx.item(3));
-          if (falseBranch instanceof SExpressionValue fval) {
-            emitLoadConstant(fval);
-          }
-          builder.setJumpLabel(endLabel);
+          handleIf(ctx);
         } else {
           throw new RuntimeException("Unknown operator: " + op.op()); // TODO: CDW
         }
@@ -126,5 +101,43 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
       return visitChildren(ctx); // TODO: CDW This should return null/nil/empty list
     }
     return null;
+  }
+
+  /// Handles an if statement.
+  /// @param ctx The context.
+  private void handleIf(ListContext ctx) {
+    var condition = visit(ctx.item(1));
+    if (condition instanceof SExpressionValue cval) {
+      emitLoadConstant(cval);
+    }
+    int elseLabel = builder.allocateJumpLabel();
+    builder.emitJumpIfFalse(elseLabel);
+    var trueBranch = visit(ctx.item(2));
+    if (trueBranch instanceof SExpressionValue tval) {
+      emitLoadConstant(tval);
+    }
+    int endLabel = builder.allocateJumpLabel();
+    builder.emitJump(endLabel);
+    builder.setJumpLabel(elseLabel);
+    var falseBranch = visit(ctx.item(3));
+    if (falseBranch instanceof SExpressionValue fval) {
+      emitLoadConstant(fval);
+    }
+    builder.setJumpLabel(endLabel);
+  }
+
+  /// Handles a binary operator.
+  /// @param ctx The context.
+  /// @param bop The binary operator.
+  private void handleBinaryOp(ListContext ctx, BinaryOp bop) {
+    var left = visit(ctx.item(1));
+    if (left instanceof SExpressionValue lval) {
+      emitLoadConstant(lval);
+    }
+    var right = visit(ctx.item(2));
+    if (right instanceof SExpressionValue rval) {
+      emitLoadConstant(rval);
+    }
+    emit(bop);
   }
 }
