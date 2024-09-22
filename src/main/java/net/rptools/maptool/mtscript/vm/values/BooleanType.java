@@ -40,4 +40,9 @@ public class BooleanType implements ValueRecord {
   public BooleanType not() {
     return value ? FALSE : TRUE;
   }
+
+  @Override
+  public String toString() {
+    return "BooleanType[value=" + value + ']';
+  }
 }

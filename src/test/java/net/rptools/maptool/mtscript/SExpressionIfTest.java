@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import net.rptools.maptool.mtscript.parser.SExpressionCompiler;
 import net.rptools.maptool.mtscript.vm.MapToolVM;
+import net.rptools.maptool.mtscript.vm.VMGlobals;
 import net.rptools.maptool.mtscript.vm.values.IntegerType;
 import org.junit.jupiter.api.Test;
 
@@ -12,8 +13,9 @@ public class SExpressionIfTest {
 
   @Test
   public void testIfTrue() {
-    MapToolVM vm = new MapToolVM();
-    var compiler = new SExpressionCompiler();
+    var globals = new VMGlobals();
+    MapToolVM vm = new MapToolVM(globals);
+    var compiler = new SExpressionCompiler(globals);
     var code = compiler.compile("(if true 1 2)", "main");
     var result = vm.exec(code);
     assertInstanceOf(IntegerType.class, result);
@@ -23,8 +25,9 @@ public class SExpressionIfTest {
 
   @Test
   public void testIfFalse() {
-    MapToolVM vm = new MapToolVM();
-    var compiler = new SExpressionCompiler();
+    var globals = new VMGlobals();
+    MapToolVM vm = new MapToolVM(globals);
+    var compiler = new SExpressionCompiler(globals);
     var code = compiler.compile("(if false 1 2)", "main");
     var result = vm.exec(code);
     assertInstanceOf(IntegerType.class, result);
@@ -33,8 +36,9 @@ public class SExpressionIfTest {
 
   @Test
   public void testIfIntegerConditions() {
-    MapToolVM vm = new MapToolVM();
-    var compiler = new SExpressionCompiler();
+    var globals = new VMGlobals();
+    MapToolVM vm = new MapToolVM(globals);
+    var compiler = new SExpressionCompiler(globals);
     var code = compiler.compile("(if (< 1 2) 10 20)", "main");
     var result = vm.exec(code);
     assertInstanceOf(IntegerType.class, result);
@@ -58,8 +62,9 @@ public class SExpressionIfTest {
 
   @Test
   public void testIfNested() {
-    MapToolVM vm = new MapToolVM();
-    var compiler = new SExpressionCompiler();
+    var globals = new VMGlobals();
+    MapToolVM vm = new MapToolVM(globals);
+    var compiler = new SExpressionCompiler(globals);
     var code = compiler.compile("(if true (if true 1 2) 3)", "main");
     var result = vm.exec(code);
     assertInstanceOf(IntegerType.class, result);

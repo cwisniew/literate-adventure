@@ -6,6 +6,7 @@ import net.rptools.maptool.mtscript.vm.values.BooleanType;
 import net.rptools.maptool.mtscript.vm.values.CodeType;
 import net.rptools.maptool.mtscript.vm.values.IntegerType;
 import net.rptools.maptool.mtscript.vm.values.ValueRecord;
+import net.rptools.maptool.mtscript.vm.values.Symbol;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,8 +28,20 @@ public class MapToolVM {
   /// The stack for the VM.
   private final Stack<ValueRecord> stack = new Stack<>();
 
+  /// The global environment for the VM.
+  private final VMGlobals globals;
+
   /// Creates a new instance of the `MaptoolVM`class.
-  public MapToolVM() {
+  /// @param globals The global environment for the VM.
+  public MapToolVM(VMGlobals globals) {
+    this.globals = globals;
+    setGlobals();
+  }
+
+  /// Sets the global variables for the VM.
+  private void setGlobals() {
+    // Define the global variables
+    globals.defineConstant("MT_VM_VERSION", new Symbol("MT_VM_VERSION", new IntegerType(1)));
   }
 
   // Execute the given program.
@@ -133,11 +146,23 @@ public class MapToolVM {
             throw new RuntimeException("Expected boolean value on stack"); // TODO: CDW
           }
         }
-        // Load label VM operation
+        // Load label VM operation TODO: CDW Do we need this?
         case LOAD_LABEL -> {
           int labelIndex = readNextByte();
           push(new IntegerType(labelIndex)); // TODO: CDW
         }
+        // Load global Value on the stack
+        case LOAD_GLOBAL -> {
+          int globalIndex = readNextByte();
+          push(globals.getGlobalVariable(globalIndex).value());
+        }
+        /// Set global Value from the stack
+        case SET_GLOBAL -> {
+          int globalIndex = readNextByte();
+          var value = peek();
+          globals.setGlobalVariable(globalIndex, value);
+        }
+
 
 
 
@@ -148,8 +173,7 @@ public class MapToolVM {
           stack.clear(); // After the program halts, the values on the stack (if any) are discarded.
           return returnValue;
         }
-        default -> throw new RuntimeException("Unknown opcode: " + String.format("%02x",  opcode)); //
-        // TODO: CDW
+        default -> throw new RuntimeException("Unhandled opcode: " + opcode + ", ip = " + instructionPointer); // TODO: CDW
       }
     }
   }
@@ -190,6 +214,15 @@ public class MapToolVM {
       throw new RuntimeException("Stack underflow"); // TODO: CDW
     }
     return stack.pop();
+  }
+
+  /// Peeks at the top of the stack.
+  /// @return The value at the top of the stack.
+  private ValueRecord peek() {
+    if (stack.isEmpty()) {
+      throw new RuntimeException("Stack underflow"); // TODO: CDW
+    }
+    return stack.peek();
   }
 
 

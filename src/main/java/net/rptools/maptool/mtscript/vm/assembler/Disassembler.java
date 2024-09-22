@@ -2,6 +2,7 @@ package net.rptools.maptool.mtscript.vm.assembler;
 
 import java.io.PrintStream;
 import net.rptools.maptool.mtscript.vm.OpCode;
+import net.rptools.maptool.mtscript.vm.VMGlobals;
 import net.rptools.maptool.mtscript.vm.values.CodeType;
 
 /// Disassembler for the MapToolVM bytecode.
@@ -15,16 +16,21 @@ public class Disassembler {
   /// The current instruction pointer.
   private int instructionPointer = 0;
 
+  /// The globals for the VM.
+  private final VMGlobals globals;
+
   /// Creates a new disassembler for the given code.
-  public Disassembler(CodeType code) {
+  public Disassembler(CodeType code, VMGlobals globals) {
     this.code = code;
+    this.globals = globals;
   }
 
 
   /// Disassembles the code and writes the output to the given stream.
   /// @param out The stream to write the disassembled code to.
   public void disassemble(PrintStream out) {
-    out.println("Program: " + code.name());
+    out.printf("Program: %s, Code Size = %d bytes\n", code.name(), code.codeLength());
+    out.println("Global Variables: " + globals.getGlobalVariableCount());
     out.println("Constants: " + code.constants().size());
     out.println();
     while (instructionPointer < code.codeLength()) {
@@ -49,26 +55,32 @@ public class Disassembler {
     switch (op) {
       case ADD, SUB, MULT, DIV, EQ, NEQ, LT, GT, LTE, GTE, HALT -> {
         dumpByteCode(out, op.byteCode());
-        out.printf("%-10s", op.instructionName());
+        out.printf("%-15s", op.instructionName());
       }
       case LOAD_CONST -> {
         byte constInd = readNextByte();
         var constant = code.getConstant(constInd);
         dumpByteCode(out, op.byteCode(), constInd);
-        out.printf("%-10s     %02x          ; %s", op.instructionName(), constInd, constant);
+        out.printf("%-15s     %02x          ; %s", op.instructionName(), constInd, constant);
+      }
+      case LOAD_GLOBAL, SET_GLOBAL -> {
+        byte globalInd = readNextByte();
+        dumpByteCode(out, op.byteCode(), globalInd);
+        out.printf("%-15s     %02x          ; Var = %s", op.instructionName(), globalInd,
+            globals.getGlobalVariable(globalInd).name());
       }
       case LOAD_LABEL -> {
         byte label = readNextByte();
         int addr = code.getJumpLabel(label);
         dumpByteCode(out, op.byteCode(), label);
-        out.printf("%-10s     %02x          ; addr = %04x", op.instructionName(), label, addr);
+        out.printf("%-15s     %02x          ; addr = %04x", op.instructionName(), label, addr);
 
       }
       case JUMP, JUMP_IF_FALSE -> {
         byte label = readNextByte();
         int addr = code.getJumpLabel(label);
         dumpByteCode(out, op.byteCode(), label);
-        out.printf("%-10s     %02x          ; Jump to %04x", op.instructionName(), label, addr);
+        out.printf("%-15s     %02x          ; Jump to %04x", op.instructionName(), label, addr);
 
       }
       default -> throw new IllegalStateException("Unexpected value: " + op); // TODO: CDW

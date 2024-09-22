@@ -167,4 +167,18 @@ public class MapToolVMByteCodeBuilder {
     writeByte((byte) label); // TODO CDW Handle > 256 labels
   }
 
+  /// Emits a load global symbol instruction.
+  /// @param index The index of the global symbol.
+  public void emitLoadGlobal(int index) {
+    emit(OpCode.LOAD_GLOBAL);
+    writeByte((byte) index); // TODO CDW Handle > 256 globals
+  }
+
+  /// Emits a set global symbol instruction.
+  /// @param index The index of the global symbol.
+  public void emitSetGlobal(int index) {
+    emit(OpCode.SET_GLOBAL);
+    writeByte((byte) index); // TODO CDW Handle > 256 globals
+  }
+
 }

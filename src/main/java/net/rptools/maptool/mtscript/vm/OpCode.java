@@ -12,7 +12,7 @@ public enum OpCode {
   // Constants
   /// Pushes a constant value onto the stack
   /// LOAD_CONST <constant index>
-  LOAD_CONST((byte) 0x21, "const_ld"),
+  LOAD_CONST((byte) 0x21, "const_load"),
 
   // Mathematical Operations
   /// Adds the top two values on the stack
@@ -70,7 +70,7 @@ public enum OpCode {
   // Jump Operations
   /// Loads a label onto the stack
   /// LOAD_LABEL <label index>
-  LOAD_LABEL((byte) 0x2C, "label_ld"),
+  LOAD_LABEL((byte) 0x2C, "label_load"),
 
 
   /// Jumps to the given label if the top value on the stack is false
@@ -82,6 +82,18 @@ public enum OpCode {
   /// JUMP <label index>
   /// Unconditionally jumps to the label.
   JUMP((byte) 0x2E, "jump"),
+
+
+  // Symbol Operations
+  /// Loads a symbol from the global variable table onto the stack
+  /// LOAD_GLOBAL <global symbol index>
+  LOAD_GLOBAL((byte) 0x2F, "global_load"),
+
+  /// Sets a symbol in the global variable table from the top of the stack.
+  /// The value is not popped from the stack.
+  /// SET_GLOBAL <global symbol index>
+  SET_GLOBAL((byte) 0x30, "global_set"),
+
 
 
 

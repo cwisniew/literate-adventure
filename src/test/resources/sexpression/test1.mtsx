@@ -1,1 +1,11 @@
+(
 (+ (+ "result" (if (< (+ (+ 2 1) 0) 2) (" is ") (" is not "))) "less than 2")
+(true)
+(MT_VM_VERSION)
+(var test1 1)
+(var test2 2)
+(var out1 (+ (+ test1 test2) MT_VM_VERSION))
+(set test1 42)
+
+MT_VM_VERSION
+)

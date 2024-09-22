@@ -4,6 +4,8 @@ import net.rptools.maptool.mtscript.parser.expr.BooleanValue;
 
 /// Represents a value and its type in the MTScript VM.
 public interface ValueRecord {
+  /// Returns the type of this value.
+  /// @return The type of this value.
   ValueType valueType();
 
   /// Adds another value to this value.

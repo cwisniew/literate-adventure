@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import net.rptools.maptool.mtscript.parser.SExpressionCompiler;
 import net.rptools.maptool.mtscript.vm.MapToolVM;
+import net.rptools.maptool.mtscript.vm.VMGlobals;
 import net.rptools.maptool.mtscript.vm.values.BooleanType;
 import org.junit.jupiter.api.Test;
 
@@ -14,8 +15,9 @@ public class SExpressionStringComparisonTests {
   /// Tests the equality of two strings.
   @Test
   public void testStringEquality() {
-    MapToolVM vm = new MapToolVM();
-    var compiler = new SExpressionCompiler();
+    var globals = new VMGlobals();
+    MapToolVM vm = new MapToolVM(globals);
+    var compiler = new SExpressionCompiler(globals);
     var code = compiler.compile("(== \"Hello\" \"Hello\")", "main");
     var result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
@@ -30,8 +32,9 @@ public class SExpressionStringComparisonTests {
   /// Tests the inequality of two strings.
   @Test
   public void testStringInequality() {
-    MapToolVM vm = new MapToolVM();
-    var compiler = new SExpressionCompiler();
+    var globals = new VMGlobals();
+    MapToolVM vm = new MapToolVM(globals);
+    var compiler = new SExpressionCompiler(globals);
     var code = compiler.compile("(!= \"Hello\" \"Hello\")", "main");
     var result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
@@ -46,8 +49,9 @@ public class SExpressionStringComparisonTests {
   /// Tests the less than operator.
   @Test
   public void testLessThan() {
-    MapToolVM vm = new MapToolVM();
-    var compiler = new SExpressionCompiler();
+    var globals = new VMGlobals();
+    MapToolVM vm = new MapToolVM(globals);
+    var compiler = new SExpressionCompiler(globals);
     var code = compiler.compile("(< \"a\" \"b\")", "main");
     var result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
@@ -67,8 +71,9 @@ public class SExpressionStringComparisonTests {
   /// Tests the greater than operator.
   @Test
   public void testGreaterThan() {
-    MapToolVM vm = new MapToolVM();
-    var compiler = new SExpressionCompiler();
+    var globals = new VMGlobals();
+    MapToolVM vm = new MapToolVM(globals);
+    var compiler = new SExpressionCompiler(globals);
     var code = compiler.compile("(> \"a\" \"b\")", "main");
     var result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
@@ -88,8 +93,9 @@ public class SExpressionStringComparisonTests {
   /// Tests the less than or equal operator.
   @Test
   public void testLessThanOrEqual() {
-    MapToolVM vm = new MapToolVM();
-    var compiler = new SExpressionCompiler();
+    var globals = new VMGlobals();
+    MapToolVM vm = new MapToolVM(globals);
+    var compiler = new SExpressionCompiler(globals);
     var code = compiler.compile("(<= \"a\" \"b\")", "main");
     var result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
@@ -109,8 +115,9 @@ public class SExpressionStringComparisonTests {
   /// Tests the greater than or equal operator.
   @Test
   public void testGreaterThanOrEqual() {
-    MapToolVM vm = new MapToolVM();
-    var compiler = new SExpressionCompiler();
+    var globals = new VMGlobals();
+    MapToolVM vm = new MapToolVM(globals);
+    var compiler = new SExpressionCompiler(globals);
     var code = compiler.compile("(>= \"a\" \"b\")", "main");
     var result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
