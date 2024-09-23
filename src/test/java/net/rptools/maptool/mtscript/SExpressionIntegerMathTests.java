@@ -1,3 +1,17 @@
+/*
+ * This software Copyright by the RPTools.net development team, and
+ * licensed under the Affero GPL Version 3 or, at your option, any later
+ * version.
+ *
+ * MapTool Source Code is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * You should have received a copy of the GNU Affero General Public
+ * License * along with this source Code.  If not, please visit
+ * <http://www.gnu.org/licenses/> and specifically the Affero license
+ * text at <http://www.gnu.org/licenses/agpl.html>.
+ */
 package net.rptools.maptool.mtscript;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -12,7 +26,6 @@ import org.junit.jupiter.api.Test;
 /// Tests for the SExpression class.
 public class SExpressionIntegerMathTests {
 
-
   /// Tests the addition of two numbers.
   @Test
   public void testIntegerAddition() {
@@ -25,7 +38,6 @@ public class SExpressionIntegerMathTests {
     assertEquals(19, ((IntegerType) result).value());
   }
 
-
   /// Tests the addition of multiple numbers.
   @Test
   public void testNestedIntegerAddition() {
@@ -37,7 +49,6 @@ public class SExpressionIntegerMathTests {
     assertInstanceOf(IntegerType.class, result);
     assertEquals(27, ((IntegerType) result).value());
   }
-
 
   /// Tests the subtraction of two numbers.
   @Test
@@ -63,7 +74,6 @@ public class SExpressionIntegerMathTests {
     assertEquals(11, ((IntegerType) result).value());
   }
 
-
   /// Tests the multiplication of two numbers.
   @Test
   public void testMultiplication() {
@@ -75,7 +85,6 @@ public class SExpressionIntegerMathTests {
     assertInstanceOf(IntegerType.class, result);
     assertEquals(84, ((IntegerType) result).value());
   }
-
 
   /// Tests the multiplication of multiple numbers.
   @Test
@@ -101,7 +110,6 @@ public class SExpressionIntegerMathTests {
     assertEquals(11, ((IntegerType) result).value());
   }
 
-
   /// Tests the division of multiple numbers.
   @Test
   public void testNestedDivision() {
@@ -113,8 +121,6 @@ public class SExpressionIntegerMathTests {
     assertInstanceOf(IntegerType.class, result);
     assertEquals(30, ((IntegerType) result).value());
   }
-
-
 
   /// Tests the addition and subtraction of numbers.
   @Test
@@ -181,8 +187,6 @@ public class SExpressionIntegerMathTests {
     assertInstanceOf(IntegerType.class, result);
     assertEquals(36, ((IntegerType) result).value());
   }
-
-
 
   // TODO: Add negative tests
 }

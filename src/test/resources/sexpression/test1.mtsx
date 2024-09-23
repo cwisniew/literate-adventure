@@ -1,4 +1,3 @@
-(
 (+ (+ "result" (if (< (+ (+ 2 1) 0) 2) (" is ") (" is not "))) "less than 2")
 (true)
 (MT_VM_VERSION)
@@ -8,4 +7,3 @@
 (set test1 42)
 
 MT_VM_VERSION
-)

@@ -1,8 +1,20 @@
+/*
+ * This software Copyright by the RPTools.net development team, and
+ * licensed under the Affero GPL Version 3 or, at your option, any later
+ * version.
+ *
+ * MapTool Source Code is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * You should have received a copy of the GNU Affero General Public
+ * License * along with this source Code.  If not, please visit
+ * <http://www.gnu.org/licenses/> and specifically the Affero license
+ * text at <http://www.gnu.org/licenses/agpl.html>.
+ */
 package net.rptools.maptool.mtscript.parser.expr;
 
-/// Represents a symbol operation in an S-expression for an unknown symbol that will have
-/// to be resolved as a variable or constant.
+/// Represents a symbol operation in an S-expression for a symbol
 /// @param op The operation.
 /// @param defined Whether the symbol is defined.
-public record SymbolOp(String op, boolean defined) implements SExpressionExpr {
-}
+public record SymbolOp(String name, boolean defined) implements SExpressionExpr {}

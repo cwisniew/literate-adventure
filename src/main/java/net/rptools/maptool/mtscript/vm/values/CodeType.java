@@ -1,8 +1,23 @@
+/*
+ * This software Copyright by the RPTools.net development team, and
+ * licensed under the Affero GPL Version 3 or, at your option, any later
+ * version.
+ *
+ * MapTool Source Code is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * You should have received a copy of the GNU Affero General Public
+ * License * along with this source Code.  If not, please visit
+ * <http://www.gnu.org/licenses/> and specifically the Affero license
+ * text at <http://www.gnu.org/licenses/agpl.html>.
+ */
 package net.rptools.maptool.mtscript.vm.values;
 
-
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import net.rptools.maptool.mtscript.vm.SymbolEntry;
 
 /// Represents a code type in the MTScript VM.
 public class CodeType implements ValueRecord {
@@ -15,8 +30,11 @@ public class CodeType implements ValueRecord {
   /// The constants.
   private final ValueRecord[] constants;
 
-  // The jump labels.
+  /// The jump labels.
   private final int[] jumpLabels;
+
+  /// The local symbol table.
+  private final List<SymbolEntry> localSymbols = new ArrayList<>();
 
   /// Creates a new code type.
   /// @param name The name of the code.
@@ -33,7 +51,7 @@ public class CodeType implements ValueRecord {
 
   @Override
   public ValueType valueType() {
-      return ValueType.CODE;
+    return ValueType.CODE;
   }
 
   /// Returns the name of the code.
@@ -41,7 +59,6 @@ public class CodeType implements ValueRecord {
   public String name() {
     return name;
   }
-
 
   /// Returns the constants at the given index.
   /// @param index The index of the constant.
@@ -88,4 +105,8 @@ public class CodeType implements ValueRecord {
     return Arrays.stream(jumpLabels).boxed().toList();
   }
 
+  /// TODO: CDW Here
+  public void addLocalSymbol(SymbolEntry symbol) {
+    localSymbols.add(symbol);
+  }
 }

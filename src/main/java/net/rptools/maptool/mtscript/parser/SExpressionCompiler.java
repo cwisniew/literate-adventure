@@ -1,3 +1,17 @@
+/*
+ * This software Copyright by the RPTools.net development team, and
+ * licensed under the Affero GPL Version 3 or, at your option, any later
+ * version.
+ *
+ * MapTool Source Code is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * You should have received a copy of the GNU Affero General Public
+ * License * along with this source Code.  If not, please visit
+ * <http://www.gnu.org/licenses/> and specifically the Affero license
+ * text at <http://www.gnu.org/licenses/agpl.html>.
+ */
 package net.rptools.maptool.mtscript.parser;
 
 import net.rptools.maptool.mtscript.vm.MapToolVMByteCodeBuilder;
@@ -23,7 +37,7 @@ public class SExpressionCompiler {
   /// @param name The name to attribute to the program being compiled.
   /// @return The compiled program.
   public CodeType compile(String source, String name) {
-    var lexer = new mtSexpressionLexer(CharStreams.fromString(source));
+    var lexer = new mtSexpressionLexer(CharStreams.fromString("(begin " + source + ")"));
     var tokens = new CommonTokenStream(lexer);
     var parser = new mtSexpressionParser(tokens);
     var builder = new MapToolVMByteCodeBuilder(name);

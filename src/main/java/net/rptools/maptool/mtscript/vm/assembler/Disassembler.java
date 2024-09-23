@@ -1,3 +1,17 @@
+/*
+ * This software Copyright by the RPTools.net development team, and
+ * licensed under the Affero GPL Version 3 or, at your option, any later
+ * version.
+ *
+ * MapTool Source Code is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * You should have received a copy of the GNU Affero General Public
+ * License * along with this source Code.  If not, please visit
+ * <http://www.gnu.org/licenses/> and specifically the Affero license
+ * text at <http://www.gnu.org/licenses/agpl.html>.
+ */
 package net.rptools.maptool.mtscript.vm.assembler;
 
 import java.io.PrintStream;
@@ -24,7 +38,6 @@ public class Disassembler {
     this.code = code;
     this.globals = globals;
   }
-
 
   /// Disassembles the code and writes the output to the given stream.
   /// @param out The stream to write the disassembled code to.
@@ -53,7 +66,7 @@ public class Disassembler {
     out.printf("%04x: ", instructionPointer);
     OpCode op = readNextOpCode();
     switch (op) {
-      case ADD, SUB, MULT, DIV, EQ, NEQ, LT, GT, LTE, GTE, HALT -> {
+      case ADD, SUB, MULT, DIV, EQ, NEQ, LT, GT, LTE, GTE, HALT, POP -> {
         dumpByteCode(out, op.byteCode());
         out.printf("%-15s", op.instructionName());
       }
@@ -66,28 +79,40 @@ public class Disassembler {
       case LOAD_GLOBAL, SET_GLOBAL -> {
         byte globalInd = readNextByte();
         dumpByteCode(out, op.byteCode(), globalInd);
-        out.printf("%-15s     %02x          ; Var = %s", op.instructionName(), globalInd,
-            globals.getGlobalVariable(globalInd).name());
+        out.printf(
+            "%-15s     %02x          ; Var = %s",
+            op.instructionName(), globalInd, globals.getGlobalVariable(globalInd).name());
+      }
+      case LOAD_LOCAL, SET_LOCAL -> {
+        byte localInd = readNextByte();
+        dumpByteCode(out, op.byteCode(), localInd);
+        out.printf(
+            "%-15s     %02x          ; Local Ind = 0x%04x",
+            op.instructionName(), localInd, localInd);
       }
       case LOAD_LABEL -> {
         byte label = readNextByte();
         int addr = code.getJumpLabel(label);
         dumpByteCode(out, op.byteCode(), label);
         out.printf("%-15s     %02x          ; addr = %04x", op.instructionName(), label, addr);
-
       }
       case JUMP, JUMP_IF_FALSE -> {
         byte label = readNextByte();
         int addr = code.getJumpLabel(label);
         dumpByteCode(out, op.byteCode(), label);
-        out.printf("%-15s     %02x          ; Jump to %04x", op.instructionName(), label, addr);
-
+        out.printf("%-15s     %02x          ; Jump to 0x%04x", op.instructionName(), label, addr);
       }
-      default -> throw new IllegalStateException("Unexpected value: " + op); // TODO: CDW
+      case EXIT_SCOPE -> {
+        byte stackToPop = readNextByte();
+        dumpByteCode(out, op.byteCode(), stackToPop);
+        out.printf(
+            "%-15s     %02x          ; Exit Scope - Pop %d local vars",
+            op.instructionName(), stackToPop, stackToPop);
+      }
+      default -> throw new IllegalStateException("Unexpected name: " + op); // TODO: CDW
     }
     out.println();
   }
-
 
   /// Reads the next byte from the code.
   /// @return The next byte.

@@ -12,8 +12,15 @@
  * <http://www.gnu.org/licenses/> and specifically the Affero license
  * text at <http://www.gnu.org/licenses/agpl.html>.
  */
-package net.rptools.maptool.mtscript.parser.expr;
+package net.rptools.maptool.mtscript.vm;
 
-/// Represents an operator in an S-expression.
-/// @param op The operator.
-public record Op(String name) implements SExpressionExpr {}
+import net.rptools.maptool.mtscript.vm.values.Symbol;
+
+/// A symbol table entry.
+/// This class is used to store information about a symbol in the symbol table.
+/// This includes the symbol itself, whether it is a constant, and the scope level at which it was
+// defined.
+/// @param symbol The symbol.
+/// @param constant Whether the symbol is a constant.
+/// @param scopeLevel The scope level at which the symbol was defined.
+public record SymbolEntry(Symbol symbol, boolean constant, int scopeLevel) {}

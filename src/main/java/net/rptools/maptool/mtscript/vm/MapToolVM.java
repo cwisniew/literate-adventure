@@ -1,12 +1,25 @@
+/*
+ * This software Copyright by the RPTools.net development team, and
+ * licensed under the Affero GPL Version 3 or, at your option, any later
+ * version.
+ *
+ * MapTool Source Code is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * You should have received a copy of the GNU Affero General Public
+ * License * along with this source Code.  If not, please visit
+ * <http://www.gnu.org/licenses/> and specifically the Affero license
+ * text at <http://www.gnu.org/licenses/agpl.html>.
+ */
 package net.rptools.maptool.mtscript.vm;
-
 
 import java.util.Stack;
 import net.rptools.maptool.mtscript.vm.values.BooleanType;
 import net.rptools.maptool.mtscript.vm.values.CodeType;
 import net.rptools.maptool.mtscript.vm.values.IntegerType;
-import net.rptools.maptool.mtscript.vm.values.ValueRecord;
 import net.rptools.maptool.mtscript.vm.values.Symbol;
+import net.rptools.maptool.mtscript.vm.values.ValueRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,6 +40,9 @@ public class MapToolVM {
 
   /// The stack for the VM.
   private final Stack<ValueRecord> stack = new Stack<>();
+
+  /// The stack frame base.
+  private int stackFrameBase = 0;
 
   /// The global environment for the VM.
   private final VMGlobals globals;
@@ -50,16 +66,17 @@ public class MapToolVM {
   public ValueRecord exec(CodeType program) {
     this.program = program;
     instructionPointer = 0;
+    stackFrameBase = stack.size();
 
     try {
       return eval();
     } catch (Exception e) {
       // TODO: CDW - Handle exceptions
-      log.error("Error executing program: {}", e.getMessage());
+      var ip = String.format("0x%04x", instructionPointer - 1);
+      log.error("\nError executing program: {} @ ip = {}\n", e.getMessage(), ip);
       throw e;
     }
   }
-
 
   /// Evaluates the program.
   /// @return The result of the program.
@@ -88,7 +105,7 @@ public class MapToolVM {
           push(op1.multiply(op2));
         }
         // Divide VM operation
-        case DIV ->{
+        case DIV -> {
           var op2 = pop();
           var op1 = pop();
           push(op1.divide(op2));
@@ -143,7 +160,7 @@ public class MapToolVM {
               instructionPointer = program.getJumpLabel(labelIndex);
             }
           } else {
-            throw new RuntimeException("Expected boolean value on stack"); // TODO: CDW
+            throw new RuntimeException("Expected boolean name on stack"); // TODO: CDW
           }
         }
         // Load label VM operation TODO: CDW Do we need this?
@@ -156,49 +173,94 @@ public class MapToolVM {
           int globalIndex = readNextByte();
           push(globals.getGlobalVariable(globalIndex).value());
         }
-        /// Set global Value from the stack
+        // Set global Value from the stack
         case SET_GLOBAL -> {
           int globalIndex = readNextByte();
           var value = peek();
           globals.setGlobalVariable(globalIndex, value);
         }
-
-
-
+        // Pop top name from the stack
+        case POP -> {
+          pop();
+          dumpDebug(OpCode.POP, "after");
+        }
+        // Load local Value on the top of the stack
+        case LOAD_LOCAL -> {
+          int localIndex = readNextByte();
+          push(stack.get(stackFrameBase + localIndex));
+        }
+        // Set local Value from the top of the stack
+        case SET_LOCAL -> {
+          int localIndex = readNextByte();
+          var value = peek();
+          stack.set(stackFrameBase + localIndex, value);
+        }
+        // Exit the current scope
+        case EXIT_SCOPE -> {
+          dumpDebug(OpCode.EXIT_SCOPE, "before");
+          int stackToPop = readNextByte();
+          var returnValue = pop();
+          for (int i = 0; i < stackToPop; i++) { // TODO: CDW
+            pop();
+          }
+          push(returnValue);
+          dumpDebug(OpCode.EXIT_SCOPE, "after");
+        }
 
         // Halt VM operation
         case HALT -> {
-          log.debug("HALT @ ip = {}", instructionPointer);  // TODO: CDW
+          dumpDebug(OpCode.HALT, "before");
           var returnValue = pop();
           stack.clear(); // After the program halts, the values on the stack (if any) are discarded.
           return returnValue;
         }
-        default -> throw new RuntimeException("Unhandled opcode: " + opcode + ", ip = " + instructionPointer); // TODO: CDW
+        default ->
+            throw new RuntimeException(
+                "Unhandled opcode: " + opcode + ", ip = " + instructionPointer); // TODO: CDW
       }
     }
   }
 
-  /// Gets the constant value at the current instruction pointer.
-  /// @return The constant value.
+  private void dumpDebug(OpCode opCode, String message) {
+    var ip = String.format("0x%04x", instructionPointer - 1);
+    log.debug("{} {} @ ip = {}", message, opCode.instructionName(), ip); // TODO: CDW
+    log.debug("  Stack:");
+    for (int i = 0; i < stack.size(); i++) {
+      log.debug("    {}: {}", i, stack.get(i)); // TODO: CDW
+    }
+    log.debug("  Globals:");
+    for (int i = 0; i < globals.getGlobalVariableCount(); i++) {
+      log.debug("    {}: {}", i, globals.getGlobalVariable(i)); // TODO: CDW
+    }
+  }
+
+  /// Gets the constant name at the current instruction pointer.
+  /// @return The constant name.
   private ValueRecord getConstant() {
     int idx = readNextByte();
     return program.getConstant(idx);
   }
 
+  /// Reads the next byte from the code and returns it as an integer as Java Bytes are signed.
+  /// @return The next byte (as an integer).
+  private int readNextByte() {
+    return program.getByte(instructionPointer++) & 0xFF; // Java Bytes are signed
+  }
+
   /// Reads the next byte from the code.
   /// @return The next byte.
-  private byte readNextByte() {
+  private byte readNextByteRaw() {
     return program.getByte(instructionPointer++);
   }
 
   /// Reads the next opcode from the code.
   /// @return The next opcode.
   public OpCode readNextOpCode() {
-    return OpCode.fromByteCode(readNextByte());
+    return OpCode.fromByteCode(readNextByteRaw());
   }
 
-  /// Pushes a value onto the stack.
-  /// @param value The value to push.
+  /// Pushes a name onto the stack.
+  /// @param name The name to push.
   private void push(ValueRecord value) {
     if (stack.size() >= MAX_STACK_SIZE) {
       throw new RuntimeException("Stack overflow"); // TODO: CDW
@@ -206,9 +268,8 @@ public class MapToolVM {
     stack.push(value);
   }
 
-
-  /// Pops a value from the stack.
-  /// @return The value popped from the stack.
+  /// Pops a name from the stack.
+  /// @return The name popped from the stack.
   private ValueRecord pop() {
     if (stack.isEmpty()) {
       throw new RuntimeException("Stack underflow"); // TODO: CDW
@@ -217,13 +278,11 @@ public class MapToolVM {
   }
 
   /// Peeks at the top of the stack.
-  /// @return The value at the top of the stack.
+  /// @return The name at the top of the stack.
   private ValueRecord peek() {
     if (stack.isEmpty()) {
       throw new RuntimeException("Stack underflow"); // TODO: CDW
     }
     return stack.peek();
   }
-
-
 }
