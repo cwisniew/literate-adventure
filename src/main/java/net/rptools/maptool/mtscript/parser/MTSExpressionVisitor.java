@@ -123,7 +123,7 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
           emitLoadConstant(new BooleanValue(false));
           yield null;
         }
-        case "if", "var", "set", "begin", "while" -> new Op(symbol);
+        case "if", "var", "set", "begin", "while", "for" -> new Op(symbol);
         default -> handleSymbol(symbol, !parsingVariableWrite);
       };
     } else if (ctx.INTEGER_LITERAL() != null) {
@@ -158,6 +158,10 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
         case "var" -> handleVar(ctx);
         case "set" -> handleSet(ctx);
         case "while" -> {
+          if (ctx.item().size() != 3) { // TODO: CDW
+            throw new RuntimeException(
+                "While statement must have exactly two operands: " + ctx.getText());
+          }
           int conditionLabel = builder.allocateJumpLabel();
           builder.setJumpLabel(conditionLabel);
           int endLabel = builder.allocateJumpLabel();
@@ -166,6 +170,24 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
           visit(ctx.item(2)); // body
           builder.emitJump(conditionLabel);
           builder.setJumpLabel(endLabel);
+        }
+        case "for" -> {
+          if (ctx.item().size() != 5) { // TODO: CDW
+            throw new RuntimeException(
+                "For statement must have exactly four operands: " + ctx.getText());
+          }
+          builder.enterScope();
+          visit(ctx.item(1)); // init
+          int conditionLabel = builder.allocateJumpLabel();
+          builder.setJumpLabel(conditionLabel);
+          int endLabel = builder.allocateJumpLabel();
+          visit(ctx.item(2)); // condition
+          builder.emitJumpIfFalse(endLabel);
+          visit(ctx.item(4)); // body
+          visit(ctx.item(3)); // increment
+          builder.emitJump(conditionLabel);
+          builder.setJumpLabel(endLabel);
+          builder.exitScope();
         }
         case "begin" -> {
           int size = ctx.item().size();
