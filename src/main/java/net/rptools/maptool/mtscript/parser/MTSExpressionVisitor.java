@@ -123,7 +123,7 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
           emitLoadConstant(new BooleanValue(false));
           yield null;
         }
-        case "if", "var", "set", "begin" -> new Op(symbol);
+        case "if", "var", "set", "begin", "while" -> new Op(symbol);
         default -> handleSymbol(symbol, !parsingVariableWrite);
       };
     } else if (ctx.INTEGER_LITERAL() != null) {
@@ -157,6 +157,16 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
         case "if" -> handleIf(ctx);
         case "var" -> handleVar(ctx);
         case "set" -> handleSet(ctx);
+        case "while" -> {
+          int conditionLabel = builder.allocateJumpLabel();
+          builder.setJumpLabel(conditionLabel);
+          int endLabel = builder.allocateJumpLabel();
+          visit(ctx.item(1)); // condition
+          builder.emitJumpIfFalse(endLabel);
+          visit(ctx.item(2)); // body
+          builder.emitJump(conditionLabel);
+          builder.setJumpLabel(endLabel);
+        }
         case "begin" -> {
           int size = ctx.item().size();
           builder.enterScope();

@@ -135,6 +135,10 @@ public enum OpCode {
   /// EXIT_SCOPE <stack to pop>
   EXIT_SCOPE((byte) 0x34, "exit_scope"),
 
+  // Loops
+  /// While loop
+  WHILE((byte) 0x35, "while"),
+
   /// No operation
   /// NOOP
   NOOP((byte) 0xFD, "noop"),
