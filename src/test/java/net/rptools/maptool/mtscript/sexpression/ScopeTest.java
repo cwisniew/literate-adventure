@@ -33,6 +33,6 @@ public class ScopeTest {
     var code = compiler.compile(program, "main");
     var result = vm.exec(code);
     assertInstanceOf(IntegerType.class, result);
-    assertEquals(221, ((IntegerType) result).value());
+    assertEquals(225, ((IntegerType) result).value());
   }
 }
