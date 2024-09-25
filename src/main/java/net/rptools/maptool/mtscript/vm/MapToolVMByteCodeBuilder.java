@@ -119,6 +119,7 @@ public class MapToolVMByteCodeBuilder {
   /// @param name The name of the symbol.
   /// @return The index of the symbol or -1 if not found.
   public int getLocalSymbolIndex(String name) {
+    // We work backwards to find the most recent version of the symbol
     for (int i = localSymbols.size() - 1; i >= 0; i--) {
       if (localSymbols.get(i).symbol().name().equals(name)) {
         return i;

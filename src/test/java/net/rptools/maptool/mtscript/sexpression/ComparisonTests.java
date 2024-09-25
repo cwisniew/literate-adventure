@@ -12,7 +12,7 @@
  * <http://www.gnu.org/licenses/> and specifically the Affero license
  * text at <http://www.gnu.org/licenses/agpl.html>.
  */
-package net.rptools.maptool.mtscript;
+package net.rptools.maptool.mtscript.sexpression;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -24,40 +24,30 @@ import net.rptools.maptool.mtscript.vm.VMGlobals;
 import net.rptools.maptool.mtscript.vm.values.BooleanType;
 import org.junit.jupiter.api.Test;
 
-public class SExpressionStringComparisonTests {
+public class ComparisonTests {
 
-  /// Tests the equality of two strings.
+  /// Tests the true boolean.
   @Test
-  public void testStringEquality() {
+  public void testTrueBoolean() {
     var globals = new VMGlobals();
     MapToolVM vm = new MapToolVM(globals);
     var compiler = new SExpressionCompiler(globals);
-    var code = compiler.compile("(== \"Hello\" \"Hello\")", "main");
+    var code = compiler.compile("(true)", "main");
     var result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
     assertTrue(((BooleanType) result).value());
-
-    code = compiler.compile("(== \"Hello\" \"World\")", "main");
-    result = vm.exec(code);
-    assertInstanceOf(BooleanType.class, result);
-    assertFalse(((BooleanType) result).value());
   }
 
-  /// Tests the inequality of two strings.
+  /// Tests the false boolean.
   @Test
-  public void testStringInequality() {
+  public void testFalseBoolean() {
     var globals = new VMGlobals();
     MapToolVM vm = new MapToolVM(globals);
     var compiler = new SExpressionCompiler(globals);
-    var code = compiler.compile("(!= \"Hello\" \"Hello\")", "main");
+    var code = compiler.compile("(false)", "main");
     var result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
     assertFalse(((BooleanType) result).value());
-
-    code = compiler.compile("(!= \"Hello\" \"World\")", "main");
-    result = vm.exec(code);
-    assertInstanceOf(BooleanType.class, result);
-    assertTrue(((BooleanType) result).value());
   }
 
   /// Tests the less than operator.
@@ -66,17 +56,17 @@ public class SExpressionStringComparisonTests {
     var globals = new VMGlobals();
     MapToolVM vm = new MapToolVM(globals);
     var compiler = new SExpressionCompiler(globals);
-    var code = compiler.compile("(< \"a\" \"b\")", "main");
+    var code = compiler.compile("(< 1 2)", "main");
     var result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
     assertTrue(((BooleanType) result).value());
 
-    code = compiler.compile("(< \"b\" \"a\")", "main");
+    code = compiler.compile("(< 2 1)", "main");
     result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
     assertFalse(((BooleanType) result).value());
 
-    code = compiler.compile("(< \"a\" \"a\")", "main");
+    code = compiler.compile("(< 1 1)", "main");
     result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
     assertFalse(((BooleanType) result).value());
@@ -88,17 +78,17 @@ public class SExpressionStringComparisonTests {
     var globals = new VMGlobals();
     MapToolVM vm = new MapToolVM(globals);
     var compiler = new SExpressionCompiler(globals);
-    var code = compiler.compile("(> \"a\" \"b\")", "main");
+    var code = compiler.compile("(> 1 2)", "main");
     var result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
     assertFalse(((BooleanType) result).value());
 
-    code = compiler.compile("(> \"b\" \"a\")", "main");
+    code = compiler.compile("(> 2 1)", "main");
     result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
     assertTrue(((BooleanType) result).value());
 
-    code = compiler.compile("(> \"a\" \"a\")", "main");
+    code = compiler.compile("(> 1 1)", "main");
     result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
     assertFalse(((BooleanType) result).value());
@@ -110,17 +100,17 @@ public class SExpressionStringComparisonTests {
     var globals = new VMGlobals();
     MapToolVM vm = new MapToolVM(globals);
     var compiler = new SExpressionCompiler(globals);
-    var code = compiler.compile("(<= \"a\" \"b\")", "main");
+    var code = compiler.compile("(<= 1 2)", "main");
     var result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
     assertTrue(((BooleanType) result).value());
 
-    code = compiler.compile("(<= \"b\" \"a\")", "main");
+    code = compiler.compile("(<= 2 1)", "main");
     result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
     assertFalse(((BooleanType) result).value());
 
-    code = compiler.compile("(<= \"a\" \"a\")", "main");
+    code = compiler.compile("(<= 1 1)", "main");
     result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
     assertTrue(((BooleanType) result).value());
@@ -132,17 +122,51 @@ public class SExpressionStringComparisonTests {
     var globals = new VMGlobals();
     MapToolVM vm = new MapToolVM(globals);
     var compiler = new SExpressionCompiler(globals);
-    var code = compiler.compile("(>= \"a\" \"b\")", "main");
+    var code = compiler.compile("(>= 1 2)", "main");
     var result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
     assertFalse(((BooleanType) result).value());
 
-    code = compiler.compile("(>= \"b\" \"a\")", "main");
+    code = compiler.compile("(>= 2 1)", "main");
     result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
     assertTrue(((BooleanType) result).value());
 
-    code = compiler.compile("(>= \"a\" \"a\")", "main");
+    code = compiler.compile("(>= 1 1)", "main");
+    result = vm.exec(code);
+    assertInstanceOf(BooleanType.class, result);
+    assertTrue(((BooleanType) result).value());
+  }
+
+  /// Tests the equal operator.
+  @Test
+  public void testEqual() {
+    var globals = new VMGlobals();
+    MapToolVM vm = new MapToolVM(globals);
+    var compiler = new SExpressionCompiler(globals);
+    var code = compiler.compile("(== 1 1)", "main");
+    var result = vm.exec(code);
+    assertInstanceOf(BooleanType.class, result);
+    assertTrue(((BooleanType) result).value());
+
+    code = compiler.compile("(== 1 2)", "main");
+    result = vm.exec(code);
+    assertInstanceOf(BooleanType.class, result);
+    assertFalse(((BooleanType) result).value());
+  }
+
+  /// Tests the not equal operator.
+  @Test
+  public void testNotEqual() {
+    var globals = new VMGlobals();
+    MapToolVM vm = new MapToolVM(globals);
+    var compiler = new SExpressionCompiler(globals);
+    var code = compiler.compile("(!= 1 1)", "main");
+    var result = vm.exec(code);
+    assertInstanceOf(BooleanType.class, result);
+    assertFalse(((BooleanType) result).value());
+
+    code = compiler.compile("(!= 1 2)", "main");
     result = vm.exec(code);
     assertInstanceOf(BooleanType.class, result);
     assertTrue(((BooleanType) result).value());

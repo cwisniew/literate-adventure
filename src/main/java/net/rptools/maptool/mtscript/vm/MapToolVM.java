@@ -23,7 +23,12 @@ import net.rptools.maptool.mtscript.vm.values.ValueRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/// The `MaptoolVM` implements the Virtual Machine for the MapTool scripting language.
+// TODO CDW: There is a problem where if a multi block program consists of nothing but local
+// variable declarations there will be a stack underflow error when the HALT opcode is reached.
+// This needs to be fixed but I am leaving this for later as we may just end up optimising these
+// types of blocks away.
+
+/// The `MapToolVM` implements the Virtual Machine for the MapTool scripting language.
 public class MapToolVM {
 
   /// The logger for the class.
@@ -73,7 +78,8 @@ public class MapToolVM {
     } catch (Exception e) {
       // TODO: CDW - Handle exceptions
       var ip = String.format("0x%04x", instructionPointer - 1);
-      log.error("\nError executing program: {} @ ip = {}\n", e.getMessage(), ip);
+      log.error("\nError executing program: {} @ ip = {} opcode = {} \n",
+          e.getMessage(), ip, OpCode.fromByteCode(program.getByte(instructionPointer)));
       throw e;
     }
   }

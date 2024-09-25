@@ -12,7 +12,7 @@
  * <http://www.gnu.org/licenses/> and specifically the Affero license
  * text at <http://www.gnu.org/licenses/agpl.html>.
  */
-package net.rptools.maptool.mtscript;
+package net.rptools.maptool.mtscript.sexpression;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -23,7 +23,7 @@ import net.rptools.maptool.mtscript.vm.VMGlobals;
 import net.rptools.maptool.mtscript.vm.values.IntegerType;
 import org.junit.jupiter.api.Test;
 
-public class SExpressionIfTest {
+public class IfTest {
 
   @Test
   public void testIfTrue() {

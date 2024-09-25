@@ -12,7 +12,7 @@
  * <http://www.gnu.org/licenses/> and specifically the Affero license
  * text at <http://www.gnu.org/licenses/agpl.html>.
  */
-package net.rptools.maptool.mtscript;
+package net.rptools.maptool.mtscript.sexpression;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -20,32 +20,41 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import net.rptools.maptool.mtscript.parser.SExpressionCompiler;
 import net.rptools.maptool.mtscript.vm.MapToolVM;
 import net.rptools.maptool.mtscript.vm.VMGlobals;
+import net.rptools.maptool.mtscript.vm.values.IntegerType;
 import net.rptools.maptool.mtscript.vm.values.StringType;
 import org.junit.jupiter.api.Test;
 
-public class SExpressionStringConcatTests {
+public class ConstantTest {
 
-  /// Tests the addition of two strings.
   @Test
-  public void testStringAddition() {
+  public void testSExpressionConstantInteger() {
     var globals = new VMGlobals();
     MapToolVM vm = new MapToolVM(globals);
     var compiler = new SExpressionCompiler(globals);
-    var code = compiler.compile("(+ \"Hello \" \"World!\")", "main");
+    var code = compiler.compile("(2)", "main");
     var result = vm.exec(code);
-    assertInstanceOf(StringType.class, result);
-    assertEquals("Hello World!", ((StringType) result).value());
+    assertInstanceOf(IntegerType.class, result);
+    assertEquals(2, ((IntegerType) result).value());
+
+    code = compiler.compile("(42)", "main");
+    result = vm.exec(code);
+    assertInstanceOf(IntegerType.class, result);
+    assertEquals(42, ((IntegerType) result).value());
   }
 
-  /// Tests the addition of multiple strings.
   @Test
-  public void testNestedStringAddition() {
+  public void testSExpressionConstantString() {
     var globals = new VMGlobals();
     MapToolVM vm = new MapToolVM(globals);
     var compiler = new SExpressionCompiler(globals);
-    var code = compiler.compile("(+ \"Hello\" (+ \", \" \"World!\"))", "main");
+    var code = compiler.compile("(\"hello\")", "main");
     var result = vm.exec(code);
     assertInstanceOf(StringType.class, result);
-    assertEquals("Hello, World!", ((StringType) result).value());
+    assertEquals("hello", ((StringType) result).value());
+
+    code = compiler.compile("(\"world\")", "main");
+    result = vm.exec(code);
+    assertInstanceOf(StringType.class, result);
+    assertEquals("world", ((StringType) result).value());
   }
 }
