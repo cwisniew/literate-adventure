@@ -14,18 +14,12 @@
  */
 package net.rptools.maptool.mtscript.vm.values;
 
-/// Represents the type that the name is in the MTScript VM.
-public enum ValueType {
-  /// Represents a boolean name.
-  BOOLEAN,
-  /// Represents an integer name.
-  INTEGER,
-  /// Represents a string name.
-  STRING,
-  /// Represents a boolean name.
-  OBJECT,
-  /// Represents code.
-  CODE,
-  /// Represents a native function.
-  NATIVE_FUNCTION,
+import net.rptools.maptool.mtscript.functions.VMFunction;
+
+public record NativeFunctionType(String name, int arity, VMFunction vmFunction)
+    implements ValueRecord {
+  @Override
+  public ValueType valueType() {
+    return ValueType.NATIVE_FUNCTION;
+  }
 }

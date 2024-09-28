@@ -4,7 +4,7 @@
   (set x1 7)
   (var x2 42)
   (+ x1 x2)
-  (begin
+  (block
     (var x1 13)
     (set x1 17)
     (var x2 142)

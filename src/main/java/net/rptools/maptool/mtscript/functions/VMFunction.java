@@ -12,20 +12,11 @@
  * <http://www.gnu.org/licenses/> and specifically the Affero license
  * text at <http://www.gnu.org/licenses/agpl.html>.
  */
-package net.rptools.maptool.mtscript.vm.values;
+package net.rptools.maptool.mtscript.functions;
 
-/// Represents the type that the name is in the MTScript VM.
-public enum ValueType {
-  /// Represents a boolean name.
-  BOOLEAN,
-  /// Represents an integer name.
-  INTEGER,
-  /// Represents a string name.
-  STRING,
-  /// Represents a boolean name.
-  OBJECT,
-  /// Represents code.
-  CODE,
-  /// Represents a native function.
-  NATIVE_FUNCTION,
+import net.rptools.maptool.mtscript.vm.MapToolVM;
+
+@FunctionalInterface
+public interface VMFunction {
+  void call(MapToolVM vm);
 }

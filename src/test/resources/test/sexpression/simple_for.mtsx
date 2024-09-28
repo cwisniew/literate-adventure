@@ -1,7 +1,7 @@
-(begin
+(block
   (var y 0)
   (for (var i 0) (< i 10) (set i (+ i 1))
-    (begin
+    (block
       (set y (- y 1))
     )
   )

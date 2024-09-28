@@ -105,7 +105,8 @@ public class CodeType implements ValueRecord {
     return Arrays.stream(jumpLabels).boxed().toList();
   }
 
-  /// TODO: CDW Here
+  /// Returns the local symbol table.
+  /// @return The local symbol table.
   public void addLocalSymbol(SymbolEntry symbol) {
     localSymbols.add(symbol);
   }

@@ -81,6 +81,15 @@ tasks.generateGrammarSource {
     outputDirectory = File("build/generated/antlr/main/net/rptools/maptool/mtscript/parser")
 }
 
+jacoco {
+    applyTo(tasks.run.get())
+}
+
+tasks.register<JacocoReport>("applicationCodeCoverageReport") {
+    executionData(tasks.run.get())
+    sourceSets(sourceSets.main.get())
+}
+
 publishing {
     publications {
         create<MavenPublication>("mtscript") {

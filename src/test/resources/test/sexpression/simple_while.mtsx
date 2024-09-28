@@ -1,8 +1,8 @@
-(begin
+(block
   (var x 0)
   (var y 0)
   (while (< x 10)
-    (begin
+    (block
       (set x (+ x 1))
       (set y (- y 1))
    )

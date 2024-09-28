@@ -109,6 +109,11 @@ public class Disassembler {
             "%-15s     %02x          ; Exit Scope - Pop %d local vars",
             op.instructionName(), stackToPop, stackToPop);
       }
+      case CALL -> {
+        byte numArgs = readNextByte();
+        dumpByteCode(out, op.byteCode(), numArgs);
+        out.printf("%-15s     %02x          ; Call with %d args", op.instructionName(), numArgs, numArgs);
+      }
       default -> throw new IllegalStateException("Unexpected name: " + op); // TODO: CDW
     }
     out.println();

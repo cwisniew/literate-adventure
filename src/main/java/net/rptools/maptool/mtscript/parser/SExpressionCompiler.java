@@ -37,12 +37,12 @@ public class SExpressionCompiler {
   /// @param name The name to attribute to the program being compiled.
   /// @return The compiled program.
   public CodeType compile(String source, String name) {
-    var lexer = new mtSexpressionLexer(CharStreams.fromString("(begin " + source + ")"));
+    var lexer = new mtSexpressionLexer(CharStreams.fromString("(block " + source + ")"));
     var tokens = new CommonTokenStream(lexer);
     var parser = new mtSexpressionParser(tokens);
     var builder = new MapToolVMByteCodeBuilder(name);
     var visitor = new MTSExpressionVisitor(builder, globals);
     var code = visitor.visit(parser.sexpr());
-    return builder.build();
+    return builder.buildProgram();
   }
 }

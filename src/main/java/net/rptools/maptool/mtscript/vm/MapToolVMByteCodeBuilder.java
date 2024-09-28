@@ -18,11 +18,12 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.Stack;
 import java.util.stream.Collectors;
 import net.rptools.maptool.mtscript.vm.values.BooleanType;
 import net.rptools.maptool.mtscript.vm.values.CodeType;
+import net.rptools.maptool.mtscript.vm.values.FunctionType;
 import net.rptools.maptool.mtscript.vm.values.IntegerType;
+import net.rptools.maptool.mtscript.vm.values.NativeFunctionType;
 import net.rptools.maptool.mtscript.vm.values.StringType;
 import net.rptools.maptool.mtscript.vm.values.Symbol;
 import net.rptools.maptool.mtscript.vm.values.ValueRecord;
@@ -30,10 +31,6 @@ import net.rptools.maptool.mtscript.vm.values.ValueRecord;
 /// Class for building byte code for the MTScript VM.
 public class MapToolVMByteCodeBuilder {
 
-  private record IfElseLabels(int elseLabel, int endIfLabel) {}
-  ;
-
-  private final Stack<IfElseLabels> ifElseLabels = new Stack<>();
 
   /// The byte code stream.
   private final ByteArrayOutputStream byteCodeStream = new ByteArrayOutputStream();
@@ -53,10 +50,25 @@ public class MapToolVMByteCodeBuilder {
   /// The name of the byte code.
   private final String name;
 
+  /// The arity of the function.
+  private final int arity;
+
+  /// The list of code objects.
+  /// TODO: populate this list
+  private final List<CodeType> codeObjects = new ArrayList<>();
+
   /// Creates a new byte code builder.
   /// @param name The name of the byte code.
   public MapToolVMByteCodeBuilder(String name) {
+    this(name, 0);
+  }
+
+  /// Creates a new byte code builder.
+  /// @param name The name of the byte code.
+  /// @param arity The arity of the function.
+  public MapToolVMByteCodeBuilder(String name, int arity) {
     this.name = name;
+    this.arity = arity;
   }
 
   /// Enters a new scope.
@@ -173,9 +185,16 @@ public class MapToolVMByteCodeBuilder {
 
   /// Builds the code type.
   /// @return The code type.
-  public CodeType build() {
+  public CodeType buildProgram() {
     emit(OpCode.HALT);
     return new CodeType(name, byteCodeStream.toByteArray(), constants, jumpLabels);
+  }
+
+  /// Builds the function type.
+  /// @return The function type.
+  public FunctionType buildFunction() {
+    emit(OpCode.RETURN);
+    return new FunctionType(name, byteCodeStream.toByteArray(), constants, jumpLabels, arity);
   }
 
   /// Emits a load constant instruction.
@@ -303,5 +322,13 @@ public class MapToolVMByteCodeBuilder {
   private void emitExitScope(int numberOfSymbols) {
     emit(OpCode.EXIT_SCOPE);
     writeByte((byte) numberOfSymbols); // TODO CDW Handle > 256 locals
+  }
+
+  /// Emits a native function call.
+  /// @param name The name of the function to call.
+  /// @param numArgs The number of arguments to the function call.
+  public void emitNativeFunctionCall(NativeFunctionType function, int numArgs) {
+    emit(OpCode.CALL);
+    writeByte((byte) numArgs); // TODO CDW Handle > 256 args
   }
 }

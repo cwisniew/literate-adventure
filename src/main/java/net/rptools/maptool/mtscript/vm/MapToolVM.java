@@ -18,6 +18,7 @@ import java.util.Stack;
 import net.rptools.maptool.mtscript.vm.values.BooleanType;
 import net.rptools.maptool.mtscript.vm.values.CodeType;
 import net.rptools.maptool.mtscript.vm.values.IntegerType;
+import net.rptools.maptool.mtscript.vm.values.NativeFunctionType;
 import net.rptools.maptool.mtscript.vm.values.Symbol;
 import net.rptools.maptool.mtscript.vm.values.ValueRecord;
 import org.apache.logging.log4j.LogManager;
@@ -78,8 +79,11 @@ public class MapToolVM {
     } catch (Exception e) {
       // TODO: CDW - Handle exceptions
       var ip = String.format("0x%04x", instructionPointer - 1);
-      log.error("\nError executing program: {} @ ip = {} opcode = {} \n",
-          e.getMessage(), ip, OpCode.fromByteCode(program.getByte(instructionPointer)));
+      log.error(
+          "\nError executing program: {} @ ip = {} opcode = {} \n",
+          e.getMessage(),
+          ip,
+          OpCode.fromByteCode(program.getByte(instructionPointer)));
       throw e;
     }
   }
@@ -212,6 +216,19 @@ public class MapToolVM {
           push(returnValue);
           dumpDebug(OpCode.EXIT_SCOPE, "after");
         }
+        // Call VM operation
+        case CALL -> {
+          int numArgs = readNextByte();
+          var function = peek(numArgs);
+          if (function instanceof NativeFunctionType nativeFunction) {
+            nativeFunction.vmFunction().call(this);
+            var result = pop();
+            pop(numArgs + 1); // Pop the arguments and the function
+            push(result); // Push the result of the function back onto the stack
+          } else {
+            throw new RuntimeException("Expected function on stack"); // TODO: CDW
+          }
+        }
 
         // Halt VM operation
         case HALT -> {
@@ -267,7 +284,7 @@ public class MapToolVM {
 
   /// Pushes a name onto the stack.
   /// @param name The name to push.
-  private void push(ValueRecord value) {
+  public void push(ValueRecord value) {
     if (stack.size() >= MAX_STACK_SIZE) {
       throw new RuntimeException("Stack overflow"); // TODO: CDW
     }
@@ -276,19 +293,37 @@ public class MapToolVM {
 
   /// Pops a name from the stack.
   /// @return The name popped from the stack.
-  private ValueRecord pop() {
+  public ValueRecord pop() {
     if (stack.isEmpty()) {
       throw new RuntimeException("Stack underflow"); // TODO: CDW
     }
     return stack.pop();
   }
 
+  /// Pops the given number of names from the stack.
+  /// @param count The number of names to pop.
+  public void pop(int count) {
+    for (int i = 0; i < count; i++) {
+      pop();
+    }
+  }
+
   /// Peeks at the top of the stack.
   /// @return The name at the top of the stack.
-  private ValueRecord peek() {
+  public ValueRecord peek() {
     if (stack.isEmpty()) {
       throw new RuntimeException("Stack underflow"); // TODO: CDW
     }
     return stack.peek();
+  }
+
+  /// Peeks at the given index from the top of the stack.
+  /// @param index The index from the top of the stack.
+  /// @return The name at the given index from the top of the stack.
+  public ValueRecord peek(int index) {
+    if (index < 0 || index >= stack.size()) {
+      throw new RuntimeException("Invalid stack index: " + index); // TODO: CDW
+    }
+    return stack.get(stack.size() - index - 1);
   }
 }
