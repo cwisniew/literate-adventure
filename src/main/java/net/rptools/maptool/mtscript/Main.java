@@ -44,6 +44,7 @@ public class Main {
     } else {
       program = Files.readString(Path.of(args[0]));
     }
+    System.err.println("program = " + program); // TODO: remove
     var globals = new VMGlobals();
     MapToolVM vm = new MapToolVM(globals);
     var compiler = new SExpressionCompiler(globals);

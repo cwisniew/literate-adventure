@@ -16,5 +16,4 @@ package net.rptools.maptool.mtscript.parser.expr;
 
 /// Represents a symbol operation in an S-expression for a symbol
 /// @param op The operation.
-/// @param defined Whether the symbol is defined.
-public record SymbolOp(String name, boolean defined) implements SExpressionExpr {}
+public record SymbolOp(String name) implements SExpressionExpr {}

@@ -29,28 +29,10 @@ import net.rptools.maptool.mtscript.vm.MapToolVMByteCodeBuilder;
 import net.rptools.maptool.mtscript.vm.VMGlobals;
 import net.rptools.maptool.mtscript.vm.values.NativeFunctionType;
 import net.rptools.maptool.mtscript.vm.values.ValueType;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 /// A visitor for S-expressions that generates a program.
 public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpressionExpr> {
-
-  enum ParseState {
-    NONE(true),
-    VARIABLE_DEFINITION(false),
-    FUNCTION_PARAMETER (false);
-
-    private final boolean emitLoadInstruction;
-
-    ParseState(boolean emitLoadInstruction) {
-      this.emitLoadInstruction = emitLoadInstruction;
-    }
-
-    public boolean emitLoadInstruction() {
-      return emitLoadInstruction;
-    }
-  };
-
-  /// The current parse state.
-  private ParseState parseState = ParseState.NONE;
 
 
   /// The byte code builder stack
@@ -117,8 +99,7 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
 
   /// Handles a symbol.
   /// @param name The name of the symbol.
-  /// @param generateLoad Whether to generate a load instruction.
-  private SExpressionExpr handleSymbol(String name, boolean generateLoad) {
+  private SExpressionExpr handleSymbol(String name) {
     // TODO: CDW This works but is in desperate need of refactoring.
     int index = -1;
     boolean isGlobal = false;
@@ -133,16 +114,14 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
       }
     }
     if (index != -1) {
-      if (generateLoad) {
-        if (isGlobal) {
-          builder.emitLoadGlobal(index);
-        } else {
-          builder.emitLoadLocal(index);
-        }
+      if (isGlobal) {
+        builder.emitLoadGlobal(index);
+      } else {
+        builder.emitLoadLocal(index);
       }
-      return new SymbolOp(name, true);
+      return new SymbolOp(name);
     }
-    return new SymbolOp(name, false);
+    return new SymbolOp(name);
   }
 
   @Override
@@ -151,8 +130,9 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
       String symbol = ctx.SYMBOL().getText();
       return switch (symbol) {
         case "+", "-", "*", "/", "<", ">", "<=", ">=", "==", "!=" -> new BinaryOp(symbol);
-        case "if", "block", "while", "for", "def" -> new Op(symbol);
-        default -> handleSymbol(symbol, parseState.emitLoadInstruction());
+        case "if", "block", "while", "for" -> new Op(symbol);
+        default -> new SymbolOp(symbol); //handleSymbol(symbol, parseState.emitLoadInstruction
+        // ());
       };
     } else if (ctx.INTEGER_LITERAL() != null) {
       emitLoadConstant(new IntegerValue(Integer.parseInt(ctx.INTEGER_LITERAL().getText())));
@@ -168,8 +148,23 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
       return new Op("var");
     } else if (ctx.VARIABLE_ASSIGN() != null) {
       return new Op("set");
+    } else if (ctx.FUNCTION_DEF() != null) {
+      return new Op("def");
     } else {
       throw new RuntimeException("Unknown atom: " + ctx.getText()); // TODO: CDW
+    }
+  }
+
+  private SExpressionExpr visitAndGenerateLoad(ParseTree tree) {
+    try {
+      var res = visit(tree);
+      if (res instanceof SymbolOp s) {
+        handleSymbol(s.name());
+      }
+      return res;
+    } catch (Exception e) {
+      System.out.println("Error: " + e.getMessage());
+      return null;
     }
   }
 
@@ -180,11 +175,8 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
       throw new RuntimeException("Empty list"); // TODO: CDW
     }
 
-    var firstOp = visit(ctx.item(0));
+    var firstOp = visitAndGenerateLoad(ctx.item(0));
     if (firstOp instanceof SymbolOp s) {
-      if (parseState != ParseState.FUNCTION_PARAMETER && !s.defined()) {
-        throw new RuntimeException("Encountered undefined symbol: " + s.name()); // // TODO: CDW
-      }
       var sym = globals.getGlobalSymbol(s.name());
       if (sym != null) {
         // TODO CDW: this only deals with globally defined native functions
@@ -209,9 +201,9 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
           int conditionLabel = builder.allocateJumpLabel();
           builder.setJumpLabel(conditionLabel);
           int endLabel = builder.allocateJumpLabel();
-          visit(ctx.item(1)); // condition
+          visitAndGenerateLoad(ctx.item(1)); // condition
           builder.emitJumpIfFalse(endLabel);
-          visit(ctx.item(2)); // body
+          visitAndGenerateLoad(ctx.item(2)); // body
           builder.emitJump(conditionLabel);
           builder.setJumpLabel(endLabel);
         }
@@ -221,14 +213,14 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
                 "For statement must have exactly four operands: " + ctx.getText());
           }
           builder.enterScope();
-          visit(ctx.item(1)); // init
+          visitAndGenerateLoad(ctx.item(1)); // init
           int conditionLabel = builder.allocateJumpLabel();
           builder.setJumpLabel(conditionLabel);
           int endLabel = builder.allocateJumpLabel();
-          visit(ctx.item(2)); // condition
+          visitAndGenerateLoad(ctx.item(2)); // condition
           builder.emitJumpIfFalse(endLabel);
-          visit(ctx.item(4)); // body
-          visit(ctx.item(3)); // increment
+          visitAndGenerateLoad(ctx.item(4)); // body
+          visitAndGenerateLoad(ctx.item(3)); // increment
           builder.emitJump(conditionLabel);
           builder.setJumpLabel(endLabel);
           builder.exitScope();
@@ -237,7 +229,7 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
           int size = ctx.item().size();
           builder.enterScope();
           for (int i = 1; i < ctx.item().size(); i++) {
-            var res = visit(ctx.item(i));
+            var res = visitAndGenerateLoad(ctx.item(i));
             boolean localSymbolDec = false;
             if (res != null && !builder.isInGlobalScope() && res.name().equals("var")) {
               localSymbolDec = true;
@@ -256,17 +248,17 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
       }
     } else {
       for (int i = 1; i < ctx.item().size(); i++) {
-        var newOp = visit(ctx.item(i));
+        var newOp = visitAndGenerateLoad(ctx.item(i));
       }
     }
     return firstOp;
   }
 
   private void handleDefineFunction(ListContext ctx) {
-    var firstArg = visit(ctx.item(1));
-    parseState = ParseState.FUNCTION_PARAMETER;
+    var firstArg = visitAndGenerateLoad(ctx.item(1));
+    //parseState = ParseState.FUNCTION_PARAMETER;
     var secondArg = visit(ctx.item(2));
-    parseState = ParseState.NONE;
+    //parseState = ParseState.NONE;
     if (firstArg instanceof SymbolOp name && secondArg instanceof IntegerValue arity) {
       // TODO: CDW handle reserved namespaces
       // TODO: CDW handle adding code object to list of objects for dissasembly
@@ -276,7 +268,7 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
       for (int i = 0; i < arity.value(); i++) {
         funcBuilder.defineLocalSymbol("arg" + i);
       }
-      visit(ctx.item(3)); // generate the function body
+      visitAndGenerateLoad(ctx.item(3)); // generate the function body
 
     } else {
       throw new RuntimeException("Invalid function definition: " + ctx.getText()); // TODO: CDW
@@ -295,7 +287,7 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
 
     // Push the arguments onto the stack in reverse order
     for (int i = ctx.item().size() - 1; i >= 1; i--) {
-      visit(ctx.item(i));
+      visitAndGenerateLoad(ctx.item(i));
     }
     builder.emitNativeFunctionCall(function, ctx.item().size() - 1);
   }
@@ -306,9 +298,7 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
     if (ctx.item().size() != 3) { // TODO: CDW
       throw new RuntimeException("Set statement must have exactly two operands: " + ctx.getText());
     }
-    parseState = ParseState.VARIABLE_DEFINITION;
     var symbol = visit(ctx.item(1));
-    parseState = ParseState.NONE;
     if (symbol instanceof SymbolOp s) {
       // dont bother checking if the symbol is defined, as we need to find it in any case
       int index = -1;
@@ -326,7 +316,7 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
       if (index == -1) {
         throw new RuntimeException("Undefined symbol: " + s.name()); // TODO: CDW
       }
-      visit(ctx.item(2));
+      visitAndGenerateLoad(ctx.item(2));
       if (isGlobal) {
         builder.emitSetGlobal(index);
       } else {
@@ -346,7 +336,7 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
     }
     var symbol = visit(ctx.item(1));
     if (symbol instanceof SymbolOp s) {
-      visit(ctx.item(2));
+      visitAndGenerateLoad(ctx.item(2));
       if (builder.isInGlobalScope()) {
         int index = globals.defineGlobalVariable(s.name());
         builder.emitSetGlobal(index);
@@ -365,20 +355,20 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
     if (ctx.item().size() != 4) { // TODO: CDW
       throw new RuntimeException("If statement must have exactly three operands: " + ctx.getText());
     }
-    var condition = visit(ctx.item(1));
+    var condition = visitAndGenerateLoad(ctx.item(1));
     if (condition instanceof SExpressionValue cval) {
       emitLoadConstant(cval);
     }
     int elseLabel = builder.allocateJumpLabel();
     builder.emitJumpIfFalse(elseLabel);
-    var trueBranch = visit(ctx.item(2));
+    var trueBranch = visitAndGenerateLoad(ctx.item(2));
     if (trueBranch instanceof SExpressionValue tval) {
       emitLoadConstant(tval);
     }
     int endLabel = builder.allocateJumpLabel();
     builder.emitJump(endLabel);
     builder.setJumpLabel(elseLabel);
-    var falseBranch = visit(ctx.item(3));
+    var falseBranch = visitAndGenerateLoad(ctx.item(3));
     if (falseBranch instanceof SExpressionValue fval) {
       emitLoadConstant(fval);
     }
@@ -393,8 +383,8 @@ public class MTSExpressionVisitor extends mtSexpressionParserBaseVisitor<SExpres
       throw new RuntimeException(
           "Binary operator (" + bop.name() + "must have exactly two operands:" + ctx.getText());
     }
-    visit(ctx.item(1));
-    visit(ctx.item(2));
+    visitAndGenerateLoad(ctx.item(1));
+    visitAndGenerateLoad(ctx.item(2));
     emit(bop);
   }
 }

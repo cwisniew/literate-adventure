@@ -218,16 +218,19 @@ public class MapToolVM {
         }
         // Call VM operation
         case CALL -> {
+          dumpDebug(OpCode.CALL, "before");
           int numArgs = readNextByte();
           var function = peek(numArgs);
           if (function instanceof NativeFunctionType nativeFunction) {
             nativeFunction.vmFunction().call(this);
+            dumpDebug(OpCode.CALL, "after");
             var result = pop();
             pop(numArgs + 1); // Pop the arguments and the function
             push(result); // Push the result of the function back onto the stack
           } else {
             throw new RuntimeException("Expected function on stack"); // TODO: CDW
           }
+          dumpDebug(OpCode.CALL, "after pop");
         }
 
         // Halt VM operation
