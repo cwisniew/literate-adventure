@@ -18,6 +18,7 @@ import java.io.PrintStream;
 import net.rptools.maptool.mtscript.vm.OpCode;
 import net.rptools.maptool.mtscript.vm.VMGlobals;
 import net.rptools.maptool.mtscript.vm.values.CodeType;
+import net.rptools.maptool.mtscript.vm.values.FunctionType;
 
 /// Disassembler for the MapToolVM bytecode.
 /// This class is used to convert the bytecode into a human-readable format.
@@ -25,7 +26,7 @@ import net.rptools.maptool.mtscript.vm.values.CodeType;
 public class Disassembler {
 
   /// The code to disassemble.
-  private CodeType code;
+  private final CodeType program;
 
   /// The current instruction pointer.
   private int instructionPointer = 0;
@@ -34,21 +35,32 @@ public class Disassembler {
   private final VMGlobals globals;
 
   /// Creates a new disassembler for the given code.
-  public Disassembler(CodeType code, VMGlobals globals) {
-    this.code = code;
+  public Disassembler(CodeType program, VMGlobals globals) {
+    this.program = program;
     this.globals = globals;
   }
 
   /// Disassembles the code and writes the output to the given stream.
   /// @param out The stream to write the disassembled code to.
   public void disassemble(PrintStream out) {
-    out.printf("Program: %s, Code Size = %d bytes\n", code.name(), code.codeLength());
+    disassembleCode(out, program);
+  }
+
+
+  private void disassembleCode(PrintStream out, CodeType code) {
+    String type = code instanceof FunctionType ? "Function" : "Program";
+    out.println();
+    out.println();
+    out.printf("%s: %s, Code Size = %d bytes\n", type, code.name(), code.codeLength());
     out.println("Global Variables: " + globals.getGlobalVariableCount());
     out.println("Constants: " + code.constants().size());
     out.println();
+    instructionPointer = 0;
     while (instructionPointer < code.codeLength()) {
-      disassembleInstruction(out);
+      disassembleInstruction(out, code);
     }
+
+    code.functions().forEach(f -> disassembleCode(out, f));
   }
 
   private void dumpByteCode(PrintStream out, byte... bytes) {
@@ -62,57 +74,59 @@ public class Disassembler {
 
   /// Disassembles the next instruction.
   /// @param out The stream to write the disassembled instruction to.
-  private void disassembleInstruction(PrintStream out) {
+  /// @param code The code to disassemble.
+  private void disassembleInstruction(PrintStream out, CodeType code) {
     out.printf("%04x: ", instructionPointer);
-    OpCode op = readNextOpCode();
+    OpCode op = readNextOpCode(code);
     switch (op) {
-      case ADD, SUB, MULT, DIV, EQ, NEQ, LT, GT, LTE, GTE, HALT, POP -> {
+      case ADD, SUB, MULT, DIV, EQ, NEQ, LT, GT, LTE, GTE, HALT, POP, RETURN -> {
         dumpByteCode(out, op.byteCode());
         out.printf("%-15s", op.instructionName());
       }
       case LOAD_CONST -> {
-        byte constInd = readNextByte();
+        byte constInd = readNextByte(code);
         var constant = code.getConstant(constInd);
         dumpByteCode(out, op.byteCode(), constInd);
         out.printf("%-15s     %02x          ; %s", op.instructionName(), constInd, constant);
       }
       case LOAD_GLOBAL, SET_GLOBAL -> {
-        byte globalInd = readNextByte();
+        byte globalInd = readNextByte(code);
         dumpByteCode(out, op.byteCode(), globalInd);
         out.printf(
             "%-15s     %02x          ; Var = %s",
-            op.instructionName(), globalInd, globals.getGlobalVariable(globalInd).name());
+            op.instructionName(), globalInd, globals.getGlobalVariable(globalInd).symbol().name());
       }
       case LOAD_LOCAL, SET_LOCAL -> {
-        byte localInd = readNextByte();
+        byte localInd = readNextByte(code);
         dumpByteCode(out, op.byteCode(), localInd);
         out.printf(
             "%-15s     %02x          ; Local Ind = 0x%04x",
             op.instructionName(), localInd, localInd);
       }
       case LOAD_LABEL -> {
-        byte label = readNextByte();
+        byte label = readNextByte(code);
         int addr = code.getJumpLabel(label);
         dumpByteCode(out, op.byteCode(), label);
         out.printf("%-15s     %02x          ; addr = %04x", op.instructionName(), label, addr);
       }
       case JUMP, JUMP_IF_FALSE -> {
-        byte label = readNextByte();
+        byte label = readNextByte(code);
         int addr = code.getJumpLabel(label);
         dumpByteCode(out, op.byteCode(), label);
         out.printf("%-15s     %02x          ; Jump to 0x%04x", op.instructionName(), label, addr);
       }
       case EXIT_SCOPE -> {
-        byte stackToPop = readNextByte();
+        byte stackToPop = readNextByte(code);
         dumpByteCode(out, op.byteCode(), stackToPop);
         out.printf(
             "%-15s     %02x          ; Exit Scope - Pop %d local vars",
             op.instructionName(), stackToPop, stackToPop);
       }
       case CALL -> {
-        byte numArgs = readNextByte();
+        byte numArgs = readNextByte(code);
         dumpByteCode(out, op.byteCode(), numArgs);
-        out.printf("%-15s     %02x          ; Call with %d args", op.instructionName(), numArgs, numArgs);
+        out.printf(
+            "%-15s     %02x          ; Call with %d args", op.instructionName(), numArgs, numArgs);
       }
       default -> throw new IllegalStateException("Unexpected name: " + op); // TODO: CDW
     }
@@ -120,14 +134,18 @@ public class Disassembler {
   }
 
   /// Reads the next byte from the code.
+  /// @param code The code to read from.
   /// @return The next byte.
-  private byte readNextByte() {
+  /// @throws IndexOutOfBoundsException If the instruction pointer is out of bounds.u
+  private byte readNextByte(CodeType code) {
     return code.getByte(instructionPointer++);
   }
 
   /// Reads the next opcode from the code.
+  /// @param code The code to read from.
   /// @return The next opcode.
-  private OpCode readNextOpCode() {
-    return OpCode.fromByteCode(readNextByte());
+  /// @throws IndexOutOfBoundsException If the instruction pointer is out of bounds.
+  private OpCode readNextOpCode(CodeType code) {
+    return OpCode.fromByteCode(readNextByte(code));
   }
 }

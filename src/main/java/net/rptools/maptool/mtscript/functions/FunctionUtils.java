@@ -17,7 +17,6 @@ package net.rptools.maptool.mtscript.functions;
 import net.rptools.maptool.mtscript.vm.MapToolVM;
 import net.rptools.maptool.mtscript.vm.values.ValueRecord;
 
-
 /// Utility functions for MapToolVM functions.
 public class FunctionUtils {
 
@@ -36,7 +35,7 @@ public class FunctionUtils {
   /// @return The arguments.
   public ValueRecord[] getArgs(int count) {
     ValueRecord[] args = new ValueRecord[count];
-    for (int i = 0; i < count;  i++) {
+    for (int i = 0; i < count; i++) {
       args[i] = vm.peek(i);
     }
     return args;

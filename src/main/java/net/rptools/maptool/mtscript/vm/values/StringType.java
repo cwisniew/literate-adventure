@@ -23,6 +23,11 @@ public record StringType(String value) implements ValueRecord {
   }
 
   @Override
+  public String name() {
+    return value;
+  }
+
+  @Override
   public StringType add(ValueRecord other) {
     if (other instanceof StringType otherString) {
       return new StringType(value + otherString.value());

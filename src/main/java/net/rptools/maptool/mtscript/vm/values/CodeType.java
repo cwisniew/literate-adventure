@@ -16,7 +16,9 @@ package net.rptools.maptool.mtscript.vm.values;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import net.rptools.maptool.mtscript.vm.SymbolEntry;
 
 /// Represents a code type in the MTScript VM.
@@ -33,20 +35,29 @@ public class CodeType implements ValueRecord {
   /// The jump labels.
   private final int[] jumpLabels;
 
-  /// The local symbol table.
-  private final List<SymbolEntry> localSymbols = new ArrayList<>();
+  /// The functions that have been defined.
+  private final FunctionType[] functions;
+
+
 
   /// Creates a new code type.
   /// @param name The name of the code.
   /// @param code The byte code.
   /// @param constants The constants.
   /// @param jumpTargets The jump labels.
-  public CodeType(String name, byte[] code, List<ValueRecord> constants, List<Integer> jumpLabels) {
+  /// @param functions The functions.
+  public CodeType(String name, byte[] code, List<ValueRecord> constants, List<Integer> jumpLabels
+      , List <FunctionType> functions) {
     this.name = name;
     this.code = new byte[code.length];
     System.arraycopy(code, 0, this.code, 0, code.length);
     this.constants = constants.toArray(new ValueRecord[0]);
     this.jumpLabels = jumpLabels.stream().mapToInt(i -> i).toArray();
+    if (functions == null) {
+      this.functions = new FunctionType[0];
+    } else {
+      this.functions = functions.toArray(new FunctionType[0]);
+    }
   }
 
   @Override
@@ -105,9 +116,9 @@ public class CodeType implements ValueRecord {
     return Arrays.stream(jumpLabels).boxed().toList();
   }
 
-  /// Returns the local symbol table.
-  /// @return The local symbol table.
-  public void addLocalSymbol(SymbolEntry symbol) {
-    localSymbols.add(symbol);
+  /// Returns the functions that have been defined.
+  /// @return The functions.
+  public List<FunctionType> functions() {
+    return List.of(functions);
   }
 }

@@ -28,4 +28,8 @@ public enum ValueType {
   CODE,
   /// Represents a native function.
   NATIVE_FUNCTION,
+  /// Represents a function.
+  FUNCTION,
+  /// Represents a function reference.
+  FUNCTION_REF,
 }

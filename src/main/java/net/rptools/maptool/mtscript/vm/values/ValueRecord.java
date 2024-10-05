@@ -20,6 +20,9 @@ public interface ValueRecord {
   /// @return The type of this name.
   ValueType valueType();
 
+  /// Returns the name
+  String name();
+
   /// Adds another name to this name.
   /// @param other The name to add to this name.
   default ValueRecord add(ValueRecord other) {

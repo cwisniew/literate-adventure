@@ -2,21 +2,29 @@ parser grammar mtSexpressionParser;
 
 options { tokenVocab=mtSexpressionLexer; }
 
-sexpr : item+ EOF ;
+sexpr          : item+ EOF
+               ;
 
-item  : atom
-      | list ;
+item           : atom
+               | list
+               | defineFunction
+               ;
 
-atom  : FUNCTION_DEF
-      | VARIABLE_DEF
-      | VARIABLE_ASSIGN
-      | VARIABLE_DEF
-      | BOOLEAN_LITERAL
-      | INTEGER_LITERAL
-      | STRING_LITERAL
-      | SYMBOL  ;
+atom           : VARIABLE_DEF
+               | VARIABLE_ASSIGN
+               | VARIABLE_DEF
+               | BOOLEAN_LITERAL
+               | INTEGER_LITERAL
+               | STRING_LITERAL
+               | SYMBOL
+               ;
 
-variable_def : VARIABLE_DEF symbol_def=SYMBOL item ;
+defineFunction : FUNCTION_DEF functionName=SYMBOL LPAREN paramList RPAREN body=list
+               ;
 
-list : LPAREN item* RPAREN ;
+paramList      : SYMBOL*
+               ;
+
+list           : LPAREN item* RPAREN
+               ;
 

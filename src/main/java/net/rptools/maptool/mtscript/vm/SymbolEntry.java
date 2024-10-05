@@ -23,4 +23,7 @@ import net.rptools.maptool.mtscript.vm.values.Symbol;
 /// @param symbol The symbol.
 /// @param constant Whether the symbol is a constant.
 /// @param scopeLevel The scope level at which the symbol was defined.
-public record SymbolEntry(Symbol symbol, boolean constant, int scopeLevel) {}
+/// @param index The index of the symbol in the symbol table.
+/// @param compileTimeConstant Whether the symbol is a compile-time constant.
+public record SymbolEntry(Symbol symbol, boolean constant, int scopeLevel, int index,
+                          boolean compileTimeConstant) {}

@@ -40,7 +40,7 @@ public class SExpressionCompiler {
     var lexer = new mtSexpressionLexer(CharStreams.fromString("(block " + source + ")"));
     var tokens = new CommonTokenStream(lexer);
     var parser = new mtSexpressionParser(tokens);
-    var builder = new MapToolVMByteCodeBuilder(name);
+    var builder = new MapToolVMByteCodeBuilder(name, globals);
     var visitor = new MTSExpressionVisitor(builder, globals);
     var code = visitor.visit(parser.sexpr());
     return builder.buildProgram();

@@ -16,7 +16,11 @@ package net.rptools.maptool.mtscript.vm;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import net.rptools.maptool.mtscript.vm.values.BooleanType;
@@ -36,7 +40,9 @@ public class MapToolVMByteCodeBuilder {
   private final ByteArrayOutputStream byteCodeStream = new ByteArrayOutputStream();
 
   /// The list of constants.
-  private final List<ValueRecord> constants = new ArrayList<>();
+  /// These are compile time constants such as literals and function names, not named symbols
+  /// declared in the language with something like ```const MEANING = 42```
+  private final Set<SymbolEntry> constantPool = new HashSet<>();
 
   /// The list of jump labels.
   private final List<Integer> jumpLabels = new ArrayList<>();
@@ -53,22 +59,37 @@ public class MapToolVMByteCodeBuilder {
   /// The arity of the function.
   private final int arity;
 
+  /// The globals for the VM.
+  private final VMGlobals globals;
+
+  /// The parent byte code builder.
+  private MapToolVMByteCodeBuilder parent;
+
   /// The list of code objects.
   /// TODO: populate this list
-  private final List<CodeType> codeObjects = new ArrayList<>();
+  private final Map<String, FunctionType> functions = new HashMap<>();
 
   /// Creates a new byte code builder.
   /// @param name The name of the byte code.
-  public MapToolVMByteCodeBuilder(String name) {
-    this(name, 0);
+  public MapToolVMByteCodeBuilder(String name, VMGlobals globals) {
+    this(name, 0, globals, null);
   }
 
   /// Creates a new byte code builder.
   /// @param name The name of the byte code.
   /// @param arity The arity of the function.
-  public MapToolVMByteCodeBuilder(String name, int arity) {
+  public MapToolVMByteCodeBuilder(
+      String name,
+      int arity,
+      VMGlobals globals,
+      MapToolVMByteCodeBuilder parent) {
     this.name = name;
     this.arity = arity;
+    this.globals = globals;
+    this.parent = parent;
+    if (this.parent != null) {
+      this.scopeLevel = VMGlobals.GLOBAL_VARIABLE_SCOPE + 1;
+    }
   }
 
   /// Enters a new scope.
@@ -112,14 +133,25 @@ public class MapToolVMByteCodeBuilder {
   /// @param name The name of the symbol.
   /// @return The index of the symbol.
   public int defineLocalSymbol(String name) {
+    return defineLocalSymbol(name, new IntegerType(0));
+  }
+
+  /// Defines a local symbol.
+  /// @param name The name of the symbol.
+  /// @param value The initialised value of the symbol.
+  public int defineLocalSymbol(String name, ValueRecord value) {
     var scopeSymbols = getSymbolsNamesForCurrentScope();
     if (scopeSymbols.contains(name)) {
       throw new RuntimeException("Symbol " + name + " already defined in scope"); // TODO CDW
     }
-    localSymbols.add(new SymbolEntry(new Symbol(name, new IntegerType(0)), false, scopeLevel));
-    return localSymbols.size() - 1;
+    int index = localSymbols.size();
+    localSymbols.add(
+        new SymbolEntry(new Symbol(name, value), false, scopeLevel, index, false));
+    return index;
   }
 
+  /// Returns the set of symbol names for the current scope.
+  /// @return The set of symbol names for the current scope.
   private Set<String> getSymbolsNamesForCurrentScope() {
     return localSymbols.stream()
         .filter(s -> s.scopeLevel() == scopeLevel)
@@ -132,12 +164,39 @@ public class MapToolVMByteCodeBuilder {
   /// @return The index of the symbol or -1 if not found.
   public int getLocalSymbolIndex(String name) {
     // We work backwards to find the most recent version of the symbol
-    for (int i = localSymbols.size() - 1; i >= 0; i--) {
-      if (localSymbols.get(i).symbol().name().equals(name)) {
-        return i;
+    if (!isInGlobalScope()) {
+      for (int i = localSymbols.size() - 1; i >= 0; i--) {
+        if (localSymbols.get(i).symbol().name().equals(name)) {
+          return i;
+        }
       }
     }
     return -1;
+  }
+
+
+  /// Resolves a symbol.
+  /// @param name The name of the symbol.
+  public SymbolEntry resolveSymbol(String name) {
+    int localIndex = getLocalSymbolIndex(name);
+    if (localIndex != -1) {
+      return localSymbols.get(localIndex);
+    }
+
+    int constantIndex = getConstant(name);
+    if (constantIndex != -1) {
+      var entry = constantPool.stream().filter(c -> c.index() == constantIndex).findFirst();
+      if (entry.isPresent()) {
+        return entry.get();
+      }
+    }
+
+    int globalIndex = globals.getGlobalSymbolIndex(name);
+    if (globalIndex != -1) {
+      return globals.getGlobalVariable(globalIndex);
+    }
+
+    return null;
   }
 
   /// Writes a byte to the byte code stream.
@@ -159,15 +218,35 @@ public class MapToolVMByteCodeBuilder {
     writeByte(op.byteCode());
   }
 
-  /// Adds a constant to the program.
+  /// Adds a constant to the constant pool for the program.
+  /// Constants in the constant pool are compile time constants such as literals and function names,
+  /// not named symbols declared in the language with something like ```const MEANING = 42```
   /// @param constant The constant to add.
   /// @return The index of the constant in the constant pool.
   public int addConstant(ValueRecord constant) {
-    if (constants.contains(constant)) {
-      return constants.indexOf(constant);
+    var existing =
+        constantPool.stream().filter(c -> c.symbol().name().equals(constant.name())).findFirst();
+
+    if (existing.isPresent()) {
+      return existing.get().index();
     }
-    constants.add(constant);
-    return constants.size() - 1;
+
+    int index = constantPool.size();
+    constantPool.add(
+        new SymbolEntry(new Symbol(constant.name(), constant), true,
+            VMGlobals.GLOBAL_VARIABLE_SCOPE, index, true));
+    return index;
+  }
+
+
+  /// Returns the index of a constant in the constant pool.
+  /// Constants in the constant pool are compile time constants such as literals and function names,
+  /// not named symbols declared in the language with something like ```const MEANING = 42```
+  /// @param name The name of the constant.
+  /// @return The index of the constant or -1 if not found.
+  public int getConstant(String name) {
+    var existing = constantPool.stream().filter(c -> c.symbol().name().equals(name)).findFirst();
+    return existing.map(SymbolEntry::index).orElse(-1);
   }
 
   /// Allocates a jump label.
@@ -187,13 +266,24 @@ public class MapToolVMByteCodeBuilder {
   /// @return The code type.
   public CodeType buildProgram() {
     emit(OpCode.HALT);
-    return new CodeType(name, byteCodeStream.toByteArray(), constants, jumpLabels);
+    var constants = constantPool.stream()
+        .sorted(Comparator.comparingInt(SymbolEntry::index))
+        .map(SymbolEntry::symbol)
+        .map(Symbol::value)
+        .toList();
+    return new CodeType(name, byteCodeStream.toByteArray(), constants, jumpLabels,
+        functions.values().stream().toList());
   }
 
   /// Builds the function type.
   /// @return The function type.
   public FunctionType buildFunction() {
     emit(OpCode.RETURN);
+    var constants = constantPool.stream()
+        .sorted(Comparator.comparingInt(SymbolEntry::index))
+        .map(SymbolEntry::symbol)
+        .map(Symbol::value)
+        .toList();
     return new FunctionType(name, byteCodeStream.toByteArray(), constants, jumpLabels, arity);
   }
 
@@ -330,5 +420,28 @@ public class MapToolVMByteCodeBuilder {
   public void emitNativeFunctionCall(NativeFunctionType function, int numArgs) {
     emit(OpCode.CALL);
     writeByte((byte) numArgs); // TODO CDW Handle > 256 args
+  }
+
+  /// Emits a function call.
+  /// @param func The function to call.
+  /// @param numArgs The number of arguments to the function call.
+  public void emitFunctionCall(FunctionType func, int numArgs) {
+    emit(OpCode.CALL);
+    writeByte((byte) numArgs); // TODO CDW Handle > 256 args
+  }
+
+  /// Adds a function to the code.
+  /// @param name The name of the function to call.
+  /// @param function The function to call.
+  public void addFunction(String name, FunctionType function) {
+    addConstant(function);
+    functions.put(name, function);
+    emitLoadConstant(function);
+  }
+
+  /// Returns the function for the given symbol.
+  /// @param name The name of the function.
+  public FunctionType getFunction(String name) {
+    return functions.get(name);
   }
 }

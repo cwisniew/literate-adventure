@@ -42,4 +42,5 @@ bin/
 .DS_Store
 
 
-
+### Gradle Antlr Plugin ###
+src/main/gen/

@@ -49,6 +49,11 @@ public class BooleanType implements ValueRecord {
     return ValueType.BOOLEAN;
   }
 
+  @Override
+  public String name() {
+    return Boolean.toString(value);
+  }
+
   /// Returns the result of the logical AND operation between this boolean and another boolean.
   /// @param other The other boolean.
   public BooleanType not() {

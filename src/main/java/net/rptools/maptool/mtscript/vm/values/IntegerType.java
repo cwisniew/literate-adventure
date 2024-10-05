@@ -23,6 +23,11 @@ public record IntegerType(double value) implements ValueRecord {
   }
 
   @Override
+  public String name() {
+    return String.valueOf(value);
+  }
+
+  @Override
   public IntegerType add(ValueRecord other) {
     if (other instanceof IntegerType otherNumber) {
       return new IntegerType(value + otherNumber.value());

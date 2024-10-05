@@ -22,4 +22,9 @@ public record NativeFunctionType(String name, int arity, VMFunction vmFunction)
   public ValueType valueType() {
     return ValueType.NATIVE_FUNCTION;
   }
+
+  @Override
+  public String toString() {
+    return "<native function: " + name + ">";
+  }
 }

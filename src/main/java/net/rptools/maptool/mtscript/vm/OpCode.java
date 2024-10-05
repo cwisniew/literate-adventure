@@ -144,7 +144,6 @@ public enum OpCode {
   /// RETURN
   RETURN((byte) 0x36, "return"),
 
-
   /// No operation
   /// NOOP
   NOOP((byte) 0xFD, "noop"),

@@ -17,6 +17,7 @@ package net.rptools.maptool.mtscript.vm;
 import java.util.Stack;
 import net.rptools.maptool.mtscript.vm.values.BooleanType;
 import net.rptools.maptool.mtscript.vm.values.CodeType;
+import net.rptools.maptool.mtscript.vm.values.FunctionType;
 import net.rptools.maptool.mtscript.vm.values.IntegerType;
 import net.rptools.maptool.mtscript.vm.values.NativeFunctionType;
 import net.rptools.maptool.mtscript.vm.values.Symbol;
@@ -53,6 +54,9 @@ public class MapToolVM {
   /// The global environment for the VM.
   private final VMGlobals globals;
 
+  /// The currently executing opcode for debug / error messages.
+  private OpCode executingOpCode;
+
   /// Creates a new instance of the `MaptoolVM`class.
   /// @param globals The global environment for the VM.
   public MapToolVM(VMGlobals globals) {
@@ -83,7 +87,40 @@ public class MapToolVM {
           "\nError executing program: {} @ ip = {} opcode = {} \n",
           e.getMessage(),
           ip,
-          OpCode.fromByteCode(program.getByte(instructionPointer)));
+          executingOpCode);
+      throw e;
+    }
+  }
+
+  /// Executes the given function.
+  /// @param function The function to execute.
+  private void execFunction(FunctionType function) {
+    // TODO: CDW - Should we be using the stack for these values?
+    // Save the current state
+    int oldInstructionPointer = instructionPointer;
+    var oldProgram = program;
+    int oldStackFrameBase = stackFrameBase;
+
+    program = function;
+    instructionPointer = 0;
+    stackFrameBase = stack.size() - function.arity();
+
+    push(function); // Push the function onto the stack after the arguments
+    try {
+       var result = eval();
+       push(result);
+      // Restore the state
+      program = oldProgram;
+      instructionPointer = oldInstructionPointer;
+      stackFrameBase = oldStackFrameBase;
+    } catch (Exception e) {
+      // TODO: CDW - Handle exceptions
+      var ip = String.format("0x%04x", instructionPointer - 1);
+      log.error(
+          "\nError executing program: {} @ ip = {} opcode = {} \n",
+          e.getMessage(),
+          ip,
+          executingOpCode);
       throw e;
     }
   }
@@ -181,7 +218,7 @@ public class MapToolVM {
         // Load global Value on the stack
         case LOAD_GLOBAL -> {
           int globalIndex = readNextByte();
-          push(globals.getGlobalVariable(globalIndex).value());
+          push(globals.getGlobalVariable(globalIndex).symbol().value());
         }
         // Set global Value from the stack
         case SET_GLOBAL -> {
@@ -227,10 +264,19 @@ public class MapToolVM {
             var result = pop();
             pop(numArgs + 1); // Pop the arguments and the function
             push(result); // Push the result of the function back onto the stack
+          } else if (function instanceof FunctionType func) {
+            execFunction(func);
           } else {
             throw new RuntimeException("Expected function on stack"); // TODO: CDW
           }
           dumpDebug(OpCode.CALL, "after pop");
+        }
+        // Return VM operation (to return from function calls).
+        case RETURN -> {
+          dumpDebug(OpCode.RETURN, "before");
+          var returnValue = pop();
+          pop(); // Pop the function local symbol from the stack
+          return returnValue;
         }
 
         // Halt VM operation
@@ -247,6 +293,10 @@ public class MapToolVM {
     }
   }
 
+
+  /// Dumps the current state of the VM for debugging.
+  /// @param opCode The current opcode.
+  /// @param message The message to display.
   private void dumpDebug(OpCode opCode, String message) {
     var ip = String.format("0x%04x", instructionPointer - 1);
     log.debug("{} {} @ ip = {}", message, opCode.instructionName(), ip); // TODO: CDW
@@ -282,7 +332,8 @@ public class MapToolVM {
   /// Reads the next opcode from the code.
   /// @return The next opcode.
   public OpCode readNextOpCode() {
-    return OpCode.fromByteCode(readNextByteRaw());
+    executingOpCode =  OpCode.fromByteCode(readNextByteRaw());
+    return executingOpCode;
   }
 
   /// Pushes a name onto the stack.
